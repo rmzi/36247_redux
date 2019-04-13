@@ -1,5 +1,5 @@
 data "aws_route53_zone" "retrofuture_media" {
-  name         = "retrofuture.studio."
+  name = "retrofuture.studio."
 }
 
 resource "aws_route53_record" "retrofuture_media" {
