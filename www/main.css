@@ -897,6 +897,19 @@ body::after {
   flex-direction: column;
   align-items: center;
   gap: 5px;
+  text-align: center;
+}
+
+.sj-vol {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sj-vol:hover {
+  color: var(--accent);
 }
 
 .sj-thumb {
@@ -913,42 +926,18 @@ body::after {
   transform: scale(1.05);
 }
 
-.sj-links {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.stout-junt a {
-  font-size: 10px;
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.stout-junt a:hover {
-  color: var(--accent);
-}
-
-.tracklist-link {
-  font-size: 9px !important;
-  opacity: 0.6;
-}
-
-.tracklist-link:hover {
-  opacity: 1;
-}
-
 .sj-collab {
   font-size: 9px;
   color: var(--muted);
 }
 
 .sj-collab a {
-  color: var(--muted);
+  color: var(--accent);
+  text-decoration: none;
 }
 
 .sj-collab a:hover {
-  color: var(--accent);
+  text-decoration: underline;
 }
 
 /* Image modal */
