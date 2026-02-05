@@ -121,6 +121,26 @@ python tools/sign-cookies.py --format curl
 python tools/sign-cookies.py --format json
 ```
 
+### Local Development
+
+```bash
+# Start local server
+cd www && python3 -m http.server 8080
+
+# Open http://localhost:8080
+```
+
+**Debug Mode (localhost only):**
+
+Use URL params or keyboard shortcuts to skip auth and test different modes:
+
+| Method | Guest | Authenticated | Super | Secret |
+|--------|-------|---------------|-------|--------|
+| URL | `?debug=guest` | `?debug=auth` | `?debug=super` | `?debug=secret` |
+| Keyboard | Shift+1 | Shift+2 | Shift+3 | Shift+4 |
+
+Debug mode only works on `localhost` - it's disabled in production.
+
 ### Run Tests
 
 ```bash
