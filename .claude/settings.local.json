@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:fffff.at)",
+      "WebFetch(domain:web.archive.org)",
+      "WebSearch",
+      "WebFetch(domain:archive.org)",
+      "WebFetch(domain:36247.fffff.at)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.evan-roth.com)",
+      "Bash(git clone:*)",
+      "Bash(chmod:*)",
+      "Bash(terraform plan:*)",
+      "Bash(terraform apply:*)",
+      "Bash(terraform init:*)",
+      "Bash(aws s3 cp:*)",
+      "Bash(aws cloudfront create-invalidation:*)",
+      "Bash(curl:*)",
+      "Bash(pip install:*)",
+      "Bash(python sign-cookies.py:*)",
+      "Bash(python3 -m pip install:*)",
+      "Bash(python3:*)",
+      "Bash(source:*)",
+      "Bash(aws s3 sync:*)",
+      "Bash(python extract_metadata.py:*)",
+      "Bash(git push:*)",
+      "Bash(git push origin main)",
+      "Bash(git push origin main:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
