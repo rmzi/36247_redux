@@ -150,6 +150,10 @@ npm run test:headed         # Watch in browser
 npm run test:ui             # Interactive UI
 ```
 
+### Claude Code
+
+This project includes a Playwright MCP configuration (`.mcp.json`) for browser automation with Claude Code. After starting a Claude Code session, the Playwright tools will be available for navigating pages, taking screenshots, and interacting with elements.
+
 ## Infrastructure (Terraform)
 
 All AWS resources are managed via Terraform in `/terraform`:
