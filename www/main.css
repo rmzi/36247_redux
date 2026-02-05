@@ -938,6 +938,19 @@ body::after {
   opacity: 1;
 }
 
+.sj-collab {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.sj-collab a {
+  color: var(--muted);
+}
+
+.sj-collab a:hover {
+  color: var(--accent);
+}
+
 /* Image modal */
 .image-modal-content {
   position: relative;
@@ -967,8 +980,6 @@ body::after {
   justify-content: center;
   gap: 20px;
   margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #222;
 }
 
 .modal-links a {
