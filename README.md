@@ -1,196 +1,30 @@
 # 36 24 7
 
-Remake of the 36 Mafia player made by the lovely folks @ F.A.T.
-
-## Live Site
-
 **https://36247.rmzi.world**
 
-## How It Works
+## What
 
-### Architecture
+A revival of fffff.at/36247, originally built by [F.A.T. Lab](https://fffff.at/about/) — the Free Art and Technology collective founded by [Evan Roth](https://evan-roth.com) and [James Powderly](https://eyebeam.org/artists/james-powderly/), who also created the [Graffiti Research Lab](https://graffitiresearchlab.com/blog/projects/laser-tag/).
 
-```
-                    CloudFront (36247.rmzi.world)
-                              │
-              ┌───────────────┴───────────────┐
-              │                               │
-    ┌─────────▼─────────┐         ┌──────────▼──────────┐
-    │  Site Bucket      │         │  Tracks Bucket      │
-    │  (public via CF)  │         │  (private, signed)  │
-    │                   │         │                     │
-    │  - index.html     │         │  - /audio/*.mp3     │
-    │  - main.js        │         │  - /artwork/*       │
-    │  - main.css       │         │  - manifest.json    │
-    │  - auth.html      │         │                     │
-    └───────────────────┘         └─────────────────────┘
-```
+## Why
 
-- **Site bucket**: Public static files served via CloudFront
-- **Tracks bucket**: Private, requires CloudFront signed cookies to access
-- **CloudFront**: Single distribution with OAC, signed cookies for `/audio/*` and `/manifest.json`
+I grew up in Memphis digging into the city's crunk and hip-hop legacy. The original 36247 was a tool that helped me get closer to that music — a rich Black cultural movement from my hometown.
 
-### Authentication Flow
+Discovering F.A.T. in high school sent me to New York. I interned at [Eyebeam](https://eyebeam.org) in 2010 under [Kaho Abe](https://kahoabe.net) and met the crew at [F.A.T. GOLD](http://gold.fffff.at) in 2013. Finding other Southern kids who'd made the same journey, coding and creating to the same sounds — that shaped everything.
 
-1. User visits `https://36247.rmzi.world`
-2. Clicks ENTER → site tries to load `/manifest.json`
-3. If no cookies → redirects to `/auth.html`
-4. `/auth.html` sets signed cookies (embedded by deploy script)
-5. Auto-redirects back to main site
-6. Cookies valid for 1 week
+Since then, I've spent years collecting Memphis tapes and DJing at WBAR in New York and [WYXR](https://wyxr.org/) in Memphis. That work connected me to the artists themselves — I brought [DJ Spanish Fly](https://www.djspanishfly.com/) to New York in 2023 and 2025. Now I share airtime with him and others on WYXR. This revival commemorates that full-circle journey.
 
-### Player Modes
+## How
 
-| Mode | URL | Features |
-|------|-----|----------|
-| Regular | `https://36247.rmzi.world` | Random playback, NEXT to skip |
-| Super | `https://36247.rmzi.world#super` | Browse/search all 2,091 tracks |
-| Secret | `https://36247.rmzi.world#secret` | Browse + download enabled |
+See [docs/](docs/) for architecture, deployment, and development details.
 
-### Keyboard Shortcuts
+**Quick start:** Visit the site, enter the password, and enjoy 2,091 Memphis rap tracks.
 
-| Key | Action |
-|-----|--------|
-| Space | Play/Pause |
-| N | Next track |
-| D | Download (secret mode only) |
-| / | Focus search (super/secret modes) |
-| ← → | Seek ±10 seconds |
+## When/Where
 
-## Quick Start (Accessing the Site)
+Made by [**Ramzi Abdoch**](https://rmzi.world) — DJ, producer, creative technologist, and archivist in Brooklyn. Co-founder of [BODYWERK](https://bodywerk.bandcamp.com).
 
-1. Visit **https://36247.rmzi.world/auth.html**
-2. Cookies are automatically set (valid 1 week)
-3. You're redirected to the player
-4. Click ENTER and enjoy!
+## Contributors
 
-## Development
-
-### Prerequisites
-
-- AWS CLI configured with `personal` profile
-- Python 3.11+ with venv
-- Node.js 18+
-
-### Setup
-
-```bash
-# Install Python dependencies
-cd tools
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# Install Node dependencies
-cd ..
-npm install
-```
-
-### Deploy Commands
-
-```bash
-# Deploy fresh auth cookies (do this weekly)
-npm run deploy:cookies
-
-# Deploy site files
-npm run deploy
-
-# Or manually:
-AWS_PROFILE=personal aws s3 sync www/ s3://36247-site.rmzi.world/
-```
-
-### Refresh Cookies
-
-Cookies expire after 1 week. To refresh:
-
-```bash
-source tools/.venv/bin/activate
-python tools/deploy-cookies.py --hours 168
-```
-
-### Generate Cookies for Testing
-
-```bash
-# For browser console
-python tools/sign-cookies.py --format js
-
-# For curl
-python tools/sign-cookies.py --format curl
-
-# JSON output
-python tools/sign-cookies.py --format json
-```
-
-### Local Development
-
-```bash
-# Start local server
-cd www && python3 -m http.server 8080
-
-# Open http://localhost:8080
-```
-
-**Debug Mode (localhost only):**
-
-Use URL params or keyboard shortcuts to skip auth and test different modes:
-
-| Method | Guest | Authenticated | Super | Secret |
-|--------|-------|---------------|-------|--------|
-| URL | `?debug=guest` | `?debug=auth` | `?debug=super` | `?debug=secret` |
-| Keyboard | Shift+1 | Shift+2 | Shift+3 | Shift+4 |
-
-Debug mode only works on `localhost` - it's disabled in production.
-
-### Run Tests
-
-```bash
-npm test                    # Run all tests
-npm run test:chromium       # Chromium only
-npm run test:headed         # Watch in browser
-npm run test:ui             # Interactive UI
-```
-
-### Claude Code
-
-This project includes a Playwright MCP configuration (`.mcp.json`) for browser automation with Claude Code. After starting a Claude Code session, the Playwright tools will be available for navigating pages, taking screenshots, and interacting with elements.
-
-## Infrastructure (Terraform)
-
-All AWS resources are managed via Terraform in `/terraform`:
-
-```bash
-cd terraform
-terraform init
-terraform plan
-terraform apply
-```
-
-### Resources Created
-
-- S3 buckets (site + tracks)
-- CloudFront distribution with OAC
-- CloudFront key pair for signing
-- Secrets Manager secret (signing key)
-- Route53 DNS records
-- IAM roles for upload/metadata tools
-
-## Tools
-
-| Tool | Description |
-|------|-------------|
-| `tools/sign-cookies.py` | Generate signed cookies for CLI/testing |
-| `tools/deploy-cookies.py` | Deploy auth.html with fresh cookies |
-| `tools/upload.py` | Upload audio files to S3 |
-| `tools/batch_upload.py` | Bulk upload from metadata_base.json |
-| `tools/extract_metadata.py` | Extract metadata from local audio files |
-
-## Data
-
-- **2,091 tracks** (~15.7 GB audio)
-- **2,091 artwork images** (~351 MB)
-- Metadata in `metadata/metadata_base.json`
-
-## Who
-
-- @rmzi
-- @awanderingorill
+- [@rmzi](https://github.com/rmzi)
+- [@awanderingorill](https://github.com/awanderingorill)
