@@ -80,6 +80,7 @@
   function showPasswordPrompt() {
     elements.passwordContainer.classList.remove('hidden');
     elements.passwordInput.focus();
+    state.passwordShowing = true;
   }
 
   // Hide password prompt
@@ -134,7 +135,14 @@
     pressedB: false,
     // Touch tracking
     touchStartX: 0,
-    touchStartY: 0
+    touchStartY: 0,
+    // Deep link
+    pendingTrackPath: null,
+    // Password/Konami flow
+    passwordShowing: false,
+    // Session history for back/forward
+    playHistory: [],
+    historyIndex: -1
   };
 
   // DOM Elements
@@ -143,6 +151,7 @@
     playerScreen: document.getElementById('player-screen'),
     errorScreen: document.getElementById('error-screen'),
     enterBtn: document.getElementById('enter-btn'),
+    backBtn: document.getElementById('back-btn'),
     playPauseBtn: document.getElementById('play-pause-btn'),
     nextBtn: document.getElementById('next-btn'),
     downloadBtn: document.getElementById('download-btn'),
@@ -168,8 +177,58 @@
     artworkImage: document.getElementById('artwork-image'),
     passwordContainer: document.getElementById('password-container'),
     passwordInput: document.getElementById('password-input'),
-    passwordError: document.getElementById('password-error')
+    passwordError: document.getElementById('password-error'),
+    volumeSlider: document.getElementById('volume-slider'),
+    volumeValue: document.getElementById('volume-value'),
+    infoTrigger: document.getElementById('info-trigger'),
+    infoModal: document.getElementById('info-modal'),
+    modalClose: document.getElementById('modal-close'),
+    modalBackdrop: document.querySelector('.modal-backdrop'),
+    imageModal: document.getElementById('image-modal'),
+    imageModalImg: document.getElementById('image-modal-img'),
+    imageModalClose: document.getElementById('image-modal-close')
   };
+
+  // URL hash helpers for deep linking (base64 encoded track path)
+  function encodeTrackHash(track) {
+    try {
+      return btoa(track.path).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function decodeTrackHash(hash) {
+    try {
+      // Restore base64 padding and chars
+      let b64 = hash.replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      return atob(b64);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getTrackPathFromHash() {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#')) {
+      return decodeTrackHash(hash.substring(1));
+    }
+    return null;
+  }
+
+  function setTrackInHash(track) {
+    if (track) {
+      const encoded = encodeTrackHash(track);
+      if (encoded) {
+        history.replaceState(
+          { screen: 'player-screen', trackPath: track.path },
+          '',
+          '#' + encoded
+        );
+      }
+    }
+  }
 
   // Utility functions
   function formatTime(seconds) {
@@ -179,9 +238,17 @@
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  function showScreen(screenId) {
+  function showScreen(screenId, pushHistory = true) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
+
+    // Push to browser history for back/forward support
+    if (pushHistory && history.pushState) {
+      const currentState = history.state;
+      if (!currentState || currentState.screen !== screenId) {
+        history.pushState({ screen: screenId }, '', '');
+      }
+    }
   }
 
   function showError(message) {
@@ -257,26 +324,34 @@
     }
   }
 
-  function showComboBreaker() {
+  function showCashRain() {
     const overlay = document.createElement('div');
-    overlay.className = 'combo-breaker';
-    overlay.innerHTML = '<span>COMBO BREAKER</span>';
-    document.body.appendChild(overlay);
-    setTimeout(() => overlay.remove(), 2000);
-  }
+    overlay.className = 'cash-rain';
 
-  function showFlipUnlock() {
-    const overlay = document.createElement('div');
-    overlay.className = 'flip-unlock';
-    overlay.innerHTML = '<span>UNLOCKED</span>';
+    // Create falling bills
+    const bills = ['💵', '💰', '💸', '🤑'];
+    const numBills = 30;
+
+    for (let i = 0; i < numBills; i++) {
+      const bill = document.createElement('span');
+      bill.className = 'bill';
+      bill.textContent = bills[Math.floor(Math.random() * bills.length)];
+      bill.style.left = Math.random() * 100 + 'vw';
+      bill.style.animationDuration = (1.5 + Math.random() * 1.5) + 's';
+      bill.style.animationDelay = (Math.random() * 0.8) + 's';
+      overlay.appendChild(bill);
+    }
+
     document.body.appendChild(overlay);
-    setTimeout(() => overlay.remove(), 2000);
+    setTimeout(() => overlay.remove(), 2500);
   }
 
   function handleKonamiInput(direction) {
-    // Only process on enter screen
-    if (!elements.enterScreen.classList.contains('active')) return;
+    // Skip if already unlocked super mode
     if (state.superUnlocked) return;
+
+    // Only allow Konami after ENTER is clicked (password box visible)
+    if (!state.passwordShowing) return;
 
     // Hide password box on first Konami input
     if (state.konamiProgress === 0 && direction === 'up') {
@@ -294,7 +369,11 @@
         setAccessLevel(ACCESS_LEVELS.SUPER);
         flashKonamiSuccess();
         showSecretHint();
-        initOrientationListener();
+        // Dismiss password box if still visible
+        if (!elements.passwordContainer.classList.contains('hidden') &&
+            !elements.passwordContainer.classList.contains('dismissed')) {
+          elements.passwordContainer.classList.add('dismissed');
+        }
       }
     } else if (direction) {
       flashKonamiError();
@@ -302,26 +381,20 @@
     }
   }
 
-  function handleBAInput(code) {
+  function handleBAInput(input) {
     if (!state.waitingForBA || state.secretUnlocked) return;
 
-    if (code === 'KeyB') {
+    if (input === 'KeyB' || input === 'down') {
       state.pressedB = true;
-    } else if (code === 'KeyA' && state.pressedB) {
-      unlockSecretDesktop();
+    } else if ((input === 'KeyA' || input === 'up') && state.pressedB) {
+      // B+A on desktop, or down+up swipe on mobile
+      if (input === 'KeyA') {
+        unlockSecretDesktop();
+      } else {
+        unlockSecretMobile();
+      }
     } else {
       state.pressedB = false;
-    }
-  }
-
-  function handleOrientation(e) {
-    if (!state.waitingForBA || state.secretUnlocked) return;
-
-    // Check if phone is upside down (gamma near 180/-180 or beta near 180/-180)
-    const isUpsideDown = Math.abs(e.gamma) > 150 || Math.abs(e.beta) > 150;
-
-    if (isUpsideDown) {
-      unlockSecretMobile();
     }
   }
 
@@ -330,7 +403,10 @@
     state.waitingForBA = false;
     state.mode = MODES.SECRET;
     setAccessLevel(ACCESS_LEVELS.SECRET);
-    showComboBreaker();
+    setSignedCookies(); // Ensure cookies are set for manifest access
+    showCashRain();
+    // Go to player after animation
+    setTimeout(() => startPlayer(), 2500);
   }
 
   function unlockSecretMobile() {
@@ -338,23 +414,10 @@
     state.waitingForBA = false;
     state.mode = MODES.SECRET;
     setAccessLevel(ACCESS_LEVELS.SECRET);
-    showFlipUnlock();
-  }
-
-  function initOrientationListener() {
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      // iOS 13+ requires permission - we'll request on first touch
-      document.addEventListener('touchend', function requestOrientation() {
-        DeviceOrientationEvent.requestPermission().then(permission => {
-          if (permission === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation);
-          }
-        }).catch(() => {});
-        document.removeEventListener('touchend', requestOrientation);
-      }, { once: true });
-    } else if (typeof DeviceOrientationEvent !== 'undefined') {
-      window.addEventListener('deviceorientation', handleOrientation);
-    }
+    setSignedCookies(); // Ensure cookies are set for manifest access
+    showCashRain();
+    // Go to player after animation
+    setTimeout(() => startPlayer(), 2500);
   }
 
   // Touch swipe detection
@@ -364,13 +427,26 @@
   }
 
   function handleTouchEnd(e) {
+    // Don't handle swipes when password input is focused
+    if (document.activeElement === elements.passwordInput) return;
+
     const dx = e.changedTouches[0].clientX - state.touchStartX;
     const dy = e.changedTouches[0].clientY - state.touchStartY;
 
+    let direction = null;
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD) {
-      handleKonamiInput(dx > 0 ? 'right' : 'left');
+      direction = dx > 0 ? 'right' : 'left';
     } else if (Math.abs(dy) > SWIPE_THRESHOLD) {
-      handleKonamiInput(dy > 0 ? 'down' : 'up');
+      direction = dy > 0 ? 'down' : 'up';
+    }
+
+    if (direction) {
+      // After Konami, swipes go to B+A handler (down=B, up=A)
+      if (state.waitingForBA) {
+        handleBAInput(direction);
+      } else {
+        handleKonamiInput(direction);
+      }
     }
   }
 
@@ -434,6 +510,29 @@
     }
   }
 
+  // Clickable metadata search (super/secret modes)
+  function searchFor(query) {
+    if (!query || !isSuperMode()) return;
+    elements.trackSearch.value = query;
+    filterTracks(query);
+    elements.trackSearch.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function setupClickableMetadata() {
+    if (!isSuperMode()) return;
+
+    const clickables = [elements.artist, elements.album, elements.artworkImage];
+    clickables.forEach(el => {
+      if (el) el.classList.add('clickable');
+    });
+
+    elements.artist.onclick = () => searchFor(state.currentTrack?.artist);
+    elements.album.onclick = () => searchFor(state.currentTrack?.album);
+    if (elements.artworkImage) {
+      elements.artworkImage.onclick = () => searchFor(state.currentTrack?.album);
+    }
+  }
+
   // Track selection
   function getNextTrack() {
     const unheard = state.tracks.filter(t => !state.heardTracks.has(t.id));
@@ -474,10 +573,6 @@
 
       let actionsHtml = `<button class="track-item-btn play-btn" data-id="${track.id}">PLAY</button>`;
 
-      if (isSecretMode()) {
-        actionsHtml += `<button class="track-item-btn download" data-id="${track.id}" data-path="${track.path}">DL</button>`;
-      }
-
       return `
         <div class="track-item ${playingClass}" data-id="${track.id}">
           <div class="track-item-info">
@@ -501,18 +596,6 @@
         const track = state.tracks.find(t => t.id === trackId);
         if (track) {
           playTrack(track);
-        }
-      });
-    });
-
-    // Bind download buttons
-    elements.trackList.querySelectorAll('.download').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const trackId = btn.dataset.id;
-        const track = state.tracks.find(t => t.id === trackId);
-        if (track) {
-          downloadTrack(track);
         }
       });
     });
@@ -541,6 +624,9 @@
     elements.album.textContent = track.album || '???';
     elements.title.textContent = track.title || '???';
     elements.year.textContent = track.year || '???';
+
+    // Setup clickable metadata for super/secret modes
+    setupClickableMetadata();
   }
 
   function updateArtwork(track) {
@@ -579,10 +665,22 @@
     }
   }
 
-  async function playTrack(track) {
+  async function playTrack(track, fromHistory = false) {
     state.currentTrack = track;
     updateTrackInfo(track);
     updateArtwork(track);
+    setTrackInHash(track);
+
+    // Add to history if not navigating from history
+    if (!fromHistory) {
+      // Truncate forward history if we're not at the end
+      if (state.historyIndex < state.playHistory.length - 1) {
+        state.playHistory = state.playHistory.slice(0, state.historyIndex + 1);
+      }
+      state.playHistory.push(track.id);
+      state.historyIndex = state.playHistory.length - 1;
+    }
+    updateBackButton();
 
     const audioUrl = '/' + track.path;
 
@@ -608,7 +706,36 @@
     }
   }
 
+  function updateBackButton() {
+    if (elements.backBtn) {
+      elements.backBtn.disabled = state.historyIndex <= 0;
+    }
+  }
+
+  function playPreviousTrack() {
+    if (state.historyIndex > 0) {
+      state.historyIndex--;
+      const trackId = state.playHistory[state.historyIndex];
+      const track = state.tracks.find(t => t.id === trackId);
+      if (track) {
+        playTrack(track, true);
+      }
+    }
+  }
+
   function playNextTrack() {
+    // If there's forward history, use it
+    if (state.historyIndex < state.playHistory.length - 1) {
+      state.historyIndex++;
+      const trackId = state.playHistory[state.historyIndex];
+      const track = state.tracks.find(t => t.id === trackId);
+      if (track) {
+        playTrack(track, true);
+        return;
+      }
+    }
+
+    // Otherwise pick a new track
     const track = getNextTrack();
     if (track) {
       playTrack(track);
@@ -677,6 +804,17 @@
       }
 
       showScreen('player-screen');
+
+      // Check for deep-linked track
+      if (state.pendingTrackPath) {
+        const linkedTrack = state.tracks.find(t => t.path === state.pendingTrackPath);
+        state.pendingTrackPath = null;
+        if (linkedTrack) {
+          playTrack(linkedTrack);
+          return;
+        }
+      }
+
       playNextTrack();
     } catch (e) {
       showError(e.message || 'Failed to start player.');
@@ -729,14 +867,14 @@
   }
 
   function handleKeydown(e) {
-    // Don't handle if typing in search
-    if (document.activeElement === elements.trackSearch) {
+    // Don't handle if typing in search or password
+    if (document.activeElement === elements.trackSearch ||
+        document.activeElement === elements.passwordInput) {
       return;
     }
 
-    // Konami code detection on enter screen
-    if (elements.enterScreen.classList.contains('active')) {
-      // Arrow keys for Konami
+    // Konami code detection (works on any screen if not yet unlocked)
+    if (!state.superUnlocked) {
       if (e.code === 'ArrowUp') {
         e.preventDefault();
         handleKonamiInput('up');
@@ -757,11 +895,16 @@
         handleKonamiInput('right');
         return;
       }
-      // B + A detection for secret mode
-      if (e.code === 'KeyB' || e.code === 'KeyA') {
-        handleBAInput(e.code);
-        return;
-      }
+    }
+
+    // B + A detection for secret mode (after Konami unlocked)
+    if (state.waitingForBA && (e.code === 'KeyB' || e.code === 'KeyA')) {
+      handleBAInput(e.code);
+      return;
+    }
+
+    // Enter screen - don't process player controls
+    if (elements.enterScreen.classList.contains('active')) {
       return;
     }
 
@@ -783,8 +926,8 @@
       downloadTrack(state.currentTrack);
     }
 
-    // Arrow keys for seeking
-    if (e.code === 'ArrowRight' && state.currentTrack) {
+    // Arrow keys for seeking (only after super unlocked, otherwise Konami takes priority)
+    if (state.superUnlocked && e.code === 'ArrowRight' && state.currentTrack) {
       e.preventDefault();
       elements.audio.currentTime = Math.min(
         elements.audio.duration,
@@ -792,7 +935,7 @@
       );
     }
 
-    if (e.code === 'ArrowLeft' && state.currentTrack) {
+    if (state.superUnlocked && e.code === 'ArrowLeft' && state.currentTrack) {
       e.preventDefault();
       elements.audio.currentTime = Math.max(0, elements.audio.currentTime - 10);
     }
@@ -802,6 +945,23 @@
       e.preventDefault();
       elements.trackSearch.focus();
     }
+
+    // P to clear cookies and reset (for testing)
+    if (e.code === 'KeyP' && e.shiftKey) {
+      e.preventDefault();
+      clearAllCookies();
+      window.location.reload();
+    }
+  }
+
+  function clearAllCookies() {
+    // Clear CloudFront cookies
+    CONFIG.COOKIE_NAMES.forEach(name => {
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
+    });
+    // Clear access level cookie
+    document.cookie = `${CONFIG.ACCESS_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
+    console.log('Cookies cleared');
   }
 
   // Initialize
@@ -817,15 +977,20 @@
       state.mode = MODES.SUPER;
       state.superUnlocked = true;
       state.waitingForBA = true;
-      initOrientationListener();
     } else {
       state.mode = MODES.REGULAR;
     }
 
     console.log('36247 initialized - access level:', accessLevel);
 
+    // Check for deep-linked track in URL
+    state.pendingTrackPath = getTrackPathFromHash();
+
     // Bind event listeners
     elements.enterBtn.addEventListener('click', handleEnter);
+    if (elements.backBtn) {
+      elements.backBtn.addEventListener('click', playPreviousTrack);
+    }
     elements.playPauseBtn.addEventListener('click', handlePlayPause);
     elements.nextBtn.addEventListener('click', handleNext);
     elements.retryBtn.addEventListener('click', handleRetry);
@@ -846,6 +1011,58 @@
       elements.trackSearch.addEventListener('input', handleSearch);
     }
 
+    // Volume slider
+    if (elements.volumeSlider) {
+      elements.volumeSlider.addEventListener('input', (e) => {
+        const vol = e.target.value / 100;
+        elements.audio.volume = vol;
+        if (elements.volumeValue) {
+          elements.volumeValue.textContent = e.target.value;
+        }
+      });
+    }
+
+    // Info modal
+    if (elements.infoTrigger) {
+      elements.infoTrigger.addEventListener('click', () => {
+        elements.infoModal.classList.remove('hidden');
+      });
+    }
+    if (elements.modalClose) {
+      elements.modalClose.addEventListener('click', () => {
+        elements.infoModal.classList.add('hidden');
+      });
+    }
+    if (elements.modalBackdrop) {
+      elements.modalBackdrop.addEventListener('click', () => {
+        elements.infoModal.classList.add('hidden');
+      });
+    }
+
+    // Image modal for Stout Junts artwork
+    document.querySelectorAll('.sj-thumb').forEach(thumb => {
+      thumb.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (elements.imageModal && elements.imageModalImg) {
+          elements.imageModalImg.src = thumb.src;
+          elements.imageModalImg.alt = thumb.alt;
+          elements.imageModal.classList.remove('hidden');
+        }
+      });
+    });
+
+    if (elements.imageModalClose) {
+      elements.imageModalClose.addEventListener('click', () => {
+        elements.imageModal.classList.add('hidden');
+      });
+    }
+
+    if (elements.imageModal) {
+      elements.imageModal.querySelector('.modal-backdrop').addEventListener('click', () => {
+        elements.imageModal.classList.add('hidden');
+      });
+    }
+
     // Password input - submit on Enter key
     if (elements.passwordInput) {
       elements.passwordInput.addEventListener('keydown', (e) => {
@@ -856,6 +1073,9 @@
       });
     }
 
+    // Set initial volume to 50%
+    elements.audio.volume = 0.5;
+
     // Handle audio errors
     elements.audio.addEventListener('error', (e) => {
       console.error('Audio error:', e);
@@ -863,6 +1083,21 @@
         playNextTrack();
       }
     });
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', (e) => {
+      if (e.state && e.state.screen) {
+        showScreen(e.state.screen, false);
+      } else {
+        // Default to enter screen if no state
+        showScreen('enter-screen', false);
+      }
+    });
+
+    // Set initial history state
+    if (history.replaceState) {
+      history.replaceState({ screen: 'enter-screen' }, '', '');
+    }
   }
 
   // Start when DOM is ready
