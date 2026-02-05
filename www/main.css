@@ -119,22 +119,29 @@ body::after {
   transform: perspective(300px) rotateX(-10deg) scaleY(1.1);
   transform-origin: center bottom;
 
-  /* Diamond/ice fill with shimmer */
-  background: linear-gradient(
-    120deg,
-    #e8f4ff 0%,
-    #ffffff 20%,
-    #d0e8ff 35%,
-    #ffffff 50%,
-    #e0f0ff 65%,
-    #ffffff 80%,
-    #e8f4ff 100%
-  );
-  background-size: 200% 100%;
+  /* Tiled diamond pattern fill - actual diamond shapes with contrast */
+  background:
+    /* Shimmer overlay */
+    linear-gradient(
+      110deg,
+      transparent 30%,
+      rgba(255,255,255,0.8) 48%,
+      rgba(255,255,255,0.8) 52%,
+      transparent 70%
+    ),
+    /* Diamond facets - high contrast to be visible */
+    repeating-conic-gradient(
+      from 45deg,
+      #ffffff 0deg 90deg,
+      #9fc5e8 90deg 180deg,
+      #ffffff 180deg 270deg,
+      #b4d7f0 270deg 360deg
+    );
+  background-size: 300% 100%, 20px 20px;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: shimmer 3s ease-in-out infinite;
+  animation: shimmer 4s linear infinite;
 
   /* Gold stroke */
   -webkit-text-stroke: 3px #b8860b;
@@ -165,49 +172,9 @@ body::after {
   filter: blur(1px);
 }
 
-/* Sparkles container */
+/* Sparkles - hidden for now */
 .sparkles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* Individual sparkle stars - positioned around text */
-.sparkles::before {
-  content: '✦ ✦ ✦ ✦ ✦';
-  position: absolute;
-  top: -15px;
-  left: 0;
-  right: 0;
-  font-size: 8px;
-  letter-spacing: 60px;
-  color: #fff;
-  text-shadow: 0 0 4px #fff, 0 0 8px #fff;
-  animation: twinkle1 2s ease-in-out infinite;
-}
-
-.sparkles::after {
-  content: '✦ ✦ ✦ ✦';
-  position: absolute;
-  bottom: -10px;
-  left: 30px;
-  font-size: 6px;
-  letter-spacing: 80px;
-  color: #fff;
-  text-shadow: 0 0 4px #fff, 0 0 8px #fff;
-  animation: twinkle2 2s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
-@keyframes twinkle1 {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.1); }
-}
-
-@keyframes twinkle2 {
-  0%, 100% { opacity: 0.5; transform: scale(0.9) rotate(0deg); }
-  50% { opacity: 1; transform: scale(1) rotate(15deg); }
+  display: none;
 }
 
 #enter-btn {

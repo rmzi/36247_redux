@@ -7,8 +7,7 @@ All notable changes to 36247 are documented here.
 ## [2.1.0] - 2026-02-05 03:45 EST
 
 ### Added
-- Diamond/ice text effect on title with animated shimmer
-- Twinkling sparkle stars around the title
+- Diamond/ice text effect on title with visible tiled diamond pattern (conic gradient) and animated shimmer
 - Localhost-only debug mode for development (Shift+1-4 or `?debug=mode`)
 - Clickable artist/album/artwork in super/secret modes (searches track list)
 - Stout Junts artwork grid with image modal in info popup
