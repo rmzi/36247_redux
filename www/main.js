@@ -23,6 +23,13 @@
   // COOKIES_PLACEHOLDER - replaced by deploy-cookies.py
   const SIGNED_COOKIES = null;
 
+  // Analytics helper
+  function trackEvent(eventName, params = {}) {
+    if (typeof gtag === 'function') {
+      gtag('event', eventName, params);
+    }
+  }
+
   // Get access level from cookie
   function getStoredAccessLevel() {
     const match = document.cookie.match(new RegExp(`${CONFIG.ACCESS_COOKIE}=([^;]+)`));
@@ -95,6 +102,7 @@
     if (password === CONFIG.PASSWORD) {
       if (setSignedCookies()) {
         setAccessLevel(ACCESS_LEVELS.AUTHENTICATED);
+        trackEvent('login', { method: 'password' });
         hidePasswordPrompt();
         startPlayer();
       } else {
@@ -102,6 +110,7 @@
         elements.passwordError.classList.add('visible');
       }
     } else {
+      trackEvent('login_failed');
       elements.passwordError.textContent = 'wrong';
       elements.passwordError.classList.add('visible');
       elements.passwordInput.value = '';
@@ -363,6 +372,7 @@
         state.secretUnlocked = true;
         state.mode = MODES.SECRET;
         setAccessLevel(ACCESS_LEVELS.SECRET);
+        trackEvent('secret_unlock', { method: 'konami' });
         flashKonamiSuccess();
         setSignedCookies();
         showCashRain();
@@ -547,6 +557,8 @@
   }
 
   // Track list (superuser mode)
+  // Debounce search tracking to avoid spam
+  let searchTrackTimeout = null;
   function filterTracks(query) {
     state.searchQuery = query.toLowerCase();
     if (!state.searchQuery) {
@@ -556,6 +568,14 @@
         const searchStr = `${t.artist || ''} ${t.album || ''} ${t.title || ''} ${t.year || ''}`.toLowerCase();
         return searchStr.includes(state.searchQuery);
       });
+      // Track search after 500ms of no typing
+      clearTimeout(searchTrackTimeout);
+      searchTrackTimeout = setTimeout(() => {
+        trackEvent('search', {
+          search_term: state.searchQuery,
+          results_count: state.filteredTracks.length
+        });
+      }, 500);
     }
     renderTrackList();
   }
@@ -691,6 +711,15 @@
       elements.playPauseBtn.textContent = 'PAUSE';
       markTrackHeard(track.id);
 
+      // Track song play
+      trackEvent('song_play', {
+        artist: track.artist,
+        album: track.album,
+        title: track.title,
+        year: track.year,
+        track_id: track.id
+      });
+
       // Update download button visibility
       if (isSecretMode()) {
         elements.downloadBtn.classList.add('visible');
@@ -745,6 +774,14 @@
   }
 
   function downloadTrack(track) {
+    trackEvent('download', {
+      artist: track.artist,
+      album: track.album,
+      title: track.title,
+      year: track.year,
+      track_id: track.id
+    });
+
     const audioUrl = getMediaUrl(track.path);
     const filename = `${track.artist || 'Unknown'} - ${track.title || 'Unknown'}.mp3`;
 
@@ -832,13 +869,28 @@
     if (elements.audio.paused) {
       elements.audio.play();
       elements.playPauseBtn.textContent = 'PAUSE';
+      trackEvent('resume');
     } else {
       elements.audio.pause();
       elements.playPauseBtn.textContent = 'PLAY';
+      trackEvent('pause', {
+        artist: state.currentTrack?.artist,
+        title: state.currentTrack?.title,
+        position_seconds: Math.floor(elements.audio.currentTime)
+      });
     }
   }
 
   function handleNext() {
+    // Track skip if song wasn't finished
+    if (state.currentTrack && elements.audio.currentTime < elements.audio.duration - 5) {
+      trackEvent('skip', {
+        artist: state.currentTrack?.artist,
+        title: state.currentTrack?.title,
+        position_seconds: Math.floor(elements.audio.currentTime),
+        duration_seconds: Math.floor(elements.audio.duration)
+      });
+    }
     playNextTrack();
   }
 
@@ -862,6 +914,14 @@
   }
 
   function handleTrackEnded() {
+    // Track completed listen
+    if (state.currentTrack) {
+      trackEvent('song_complete', {
+        artist: state.currentTrack.artist,
+        title: state.currentTrack.title,
+        duration_seconds: Math.floor(elements.audio.duration)
+      });
+    }
     playNextTrack();
   }
 
