@@ -4,6 +4,26 @@ All notable changes to 36247 are documented here.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-02-05
+
+### Added
+- Subtle red glow accent in background (bottom-right)
+- GA4 event tracking documentation in CLAUDE.md and docs/README.md
+- Screenshots in README (main_page, player)
+- "Reset cookies" link for returning users with expired sessions
+- Konami code can now retrigger cash rain animation on any screen
+
+### Changed
+- Cash rain animation: $100 bill textures with 3D tumbling, 80 bills in 3 waves
+- Track list text wraps to 2 lines instead of truncating
+- Removed separator line above track list
+- Simplified architecture docs (removed verbose ASCII diagram)
+
+### Fixed
+- Returning users with expired CloudFront cookies now auto-refresh
+- Mobile: safe-area padding for notch devices
+- Konami on enter screen now transitions to player when already unlocked
+
 ## [2.1.0] - 2026-02-05 03:45 EST
 
 ### Added

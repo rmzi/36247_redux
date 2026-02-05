@@ -2,6 +2,11 @@
 
 **https://36247.rmzi.world**
 
+<p align="center">
+  <img src="docs/screenshots/main_page.png" alt="36247 Enter Screen" width="45%">
+  <img src="docs/screenshots/player.png" alt="36247 Player" width="45%">
+</p>
+
 ## What
 
 A revival of fffff.at/36247, originally built by [F.A.T. Lab](https://fffff.at/about/) — the Free Art and Technology collective founded by [Evan Roth](https://evan-roth.com) and [James Powderly](https://eyebeam.org/artists/james-powderly/), who also created the [Graffiti Research Lab](https://graffitiresearchlab.com/blog/projects/laser-tag/).
@@ -22,7 +27,7 @@ See [docs/](docs/) for architecture, deployment, and development details.
 
 ## When/Where
 
-Made by [**Ramzi Abdoch**](https://rmzi.world) — DJ, producer, creative technologist, and archivist in Brooklyn. Co-founder of [BODYWERK](https://bodywerk.bandcamp.com).
+Made by [**Ramzi Abdoch**](https://rmzi.world) — DJ, producer, creative technologist, and archivist in Brooklyn. He is a co-founder of the collective and music label, [bodywerk](https://bodywerk.bandcamp.com).
 
 ## Contributors
 

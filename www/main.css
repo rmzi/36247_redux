@@ -58,7 +58,8 @@ body::after {
   background:
     radial-gradient(ellipse 70% 55% at 70% 70%, rgba(255,255,255,0.14) 0%, transparent 45%),
     radial-gradient(ellipse 55% 45% at 30% 30%, rgba(255,255,255,0.10) 0%, transparent 50%),
-    radial-gradient(ellipse 45% 70% at 60% 40%, rgba(255,255,255,0.08) 0%, transparent 40%);
+    radial-gradient(ellipse 45% 70% at 60% 40%, rgba(255,255,255,0.08) 0%, transparent 40%),
+    radial-gradient(ellipse 80% 60% at 85% 80%, rgba(255,0,0,0.06) 0%, transparent 50%);
   animation: smoke2 25s ease-in-out infinite;
   filter: blur(70px);
 }
@@ -259,6 +260,23 @@ body::after {
   visibility: visible;
 }
 
+.reset-link {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 15px;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+
+.reset-link:hover {
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+.reset-link.hidden {
+  display: none;
+}
+
 /* Welcome back message for returning users */
 .welcome-back {
   font-size: 12px;
@@ -326,28 +344,38 @@ body::after {
   z-index: 9999;
   pointer-events: none;
   overflow: hidden;
-  animation: cash-fade 2.5s ease-out forwards;
+  animation: cash-fade 3s ease-out forwards;
+  perspective: 1000px;
 }
 
 .cash-rain .bill {
   position: absolute;
-  top: -60px;
-  font-size: 40px;
-  animation: fall linear forwards;
-  opacity: 0.9;
+  top: -100px;
+  width: var(--bill-width, 60px);
+  height: var(--bill-height, 25px);
+  background-image: var(--bill-img);
+  background-size: cover;
+  background-position: center;
+  transform-style: preserve-3d;
+  animation: fall-tumble var(--fall-duration, 2s) linear forwards;
+  animation-delay: var(--fall-delay, 0s);
+  border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-@keyframes fall {
+@keyframes fall-tumble {
   0% {
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0) rotateZ(var(--start-rot, 0deg)) rotateX(0deg) rotateY(0deg);
+    opacity: 1;
   }
   100% {
-    transform: translateY(calc(100vh + 100px)) rotate(720deg);
+    transform: translateY(calc(100vh + 100px)) rotateZ(var(--spin-z, 360deg)) rotateX(var(--spin-x, 720deg)) rotateY(var(--spin-y, 540deg));
+    opacity: 0.7;
   }
 }
 
 @keyframes cash-fade {
-  0%, 80% { opacity: 1; }
+  0%, 70% { opacity: 1; }
   100% { opacity: 0; }
 }
 
@@ -367,8 +395,9 @@ body::after {
 .artwork-container {
   width: min(280px, 60vw);
   height: min(280px, 60vw);
-  margin: 0 auto 5%;
+  margin: 20px auto 5%;
   border: 2px solid var(--muted);
+  flex-shrink: 0;
 }
 
 .artwork-image {
@@ -573,7 +602,6 @@ body::after {
 /* Track List (Superuser Mode) */
 .track-list-container {
   margin-top: clamp(15px, 4vw, 30px);
-  border-top: 1px solid var(--muted);
   padding-top: clamp(10px, 3vw, 20px);
   width: 100%;
 }
@@ -669,12 +697,13 @@ body::after {
 
 .track-item-main {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
   gap: 5px;
+  font-size: clamp(12px, 2.5vw, 16px);
+  line-height: 1.3;
+  max-height: 2.6em; /* 2 lines */
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: clamp(14px, 3vw, 16px);
 }
 
 .track-item-artist {
@@ -1187,6 +1216,7 @@ body::after {
     height: auto;
     min-height: 100%;
     overflow: visible;
+    padding-top: max(20px, env(safe-area-inset-top, 20px));
   }
 
   .track-info {
@@ -1199,6 +1229,7 @@ body::after {
 
   .controls {
     flex-wrap: wrap;
+    gap: 10px;
   }
 
   /* Modal */

@@ -2,24 +2,10 @@
 
 ## Architecture
 
-```
-                    CloudFront (36247.rmzi.world)
-                              │
-              ┌───────────────┴───────────────┐
-              │                               │
-    ┌─────────▼─────────┐         ┌──────────▼──────────┐
-    │  Site Bucket      │         │  Tracks Bucket      │
-    │  (public via CF)  │         │  (private, signed)  │
-    │                   │         │                     │
-    │  - index.html     │         │  - /audio/*.mp3     │
-    │  - main.js        │         │  - /artwork/*       │
-    │  - main.css       │         │  - manifest.json    │
-    └───────────────────┘         └─────────────────────┘
-```
-
-- **Site bucket**: Public static files served via CloudFront
-- **Tracks bucket**: Private, requires CloudFront signed cookies
-- **CloudFront**: Single distribution with OAC, signed cookies for `/audio/*` and `/manifest.json`
+- **Site bucket**: Public static files (HTML, JS, CSS) served via CloudFront
+- **Tracks bucket**: Private audio/artwork, requires signed cookies
+- **CloudFront**: CDN with Origin Access Control (OAC) for both buckets
+- **Signed Cookies**: 1-week TTL, required for audio streaming and manifest
 
 ## Player Modes
 
@@ -139,3 +125,13 @@ terraform apply
 - **2,091 tracks** (~15.7 GB audio)
 - **2,091 artwork images** (~351 MB)
 - Metadata in `metadata/metadata_base.json`
+
+## Analytics
+
+GA4 tracks usage insights:
+- `song_play` - Track played (artist, album, title, year)
+- `song_complete` - Track finished
+- `skip` - Track skipped (with position)
+- `download` - Track downloaded (secret mode)
+- `search` - Track search queries
+- `secret_unlock` - Konami code entered

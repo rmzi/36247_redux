@@ -192,7 +192,8 @@
     modalBackdrop: document.querySelector('.modal-backdrop'),
     imageModal: document.getElementById('image-modal'),
     imageModalImg: document.getElementById('image-modal-img'),
-    imageModalClose: document.getElementById('image-modal-close')
+    imageModalClose: document.getElementById('image-modal-close'),
+    resetLink: document.getElementById('reset-link')
   };
 
   // URL hash helpers for deep linking (base64 encoded track path)
@@ -334,42 +335,73 @@
     const overlay = document.createElement('div');
     overlay.className = 'cash-rain';
 
-    // Create falling bills
-    const bills = ['💵', '💰', '💸', '🤑'];
-    const numBills = 30;
+    // $100 bill textures
+    const billImages = ['/img/benj_front.jpeg', '/img/benj_back.jpeg'];
+    const sizes = [
+      { w: 50, h: 21 },
+      { w: 70, h: 30 },
+      { w: 90, h: 38 }
+    ];
+    const numBills = 80;
 
-    for (let i = 0; i < numBills; i++) {
-      const bill = document.createElement('span');
-      bill.className = 'bill';
-      bill.textContent = bills[Math.floor(Math.random() * bills.length)];
-      bill.style.left = Math.random() * 100 + 'vw';
-      bill.style.animationDuration = (1.5 + Math.random() * 1.5) + 's';
-      bill.style.animationDelay = (Math.random() * 0.8) + 's';
-      overlay.appendChild(bill);
+    // Create 3 waves of falling bills
+    for (let wave = 0; wave < 3; wave++) {
+      const waveDelay = wave * 0.4;
+      const billsInWave = Math.floor(numBills / 3);
+
+      for (let i = 0; i < billsInWave; i++) {
+        const bill = document.createElement('div');
+        bill.className = 'bill';
+
+        const size = sizes[Math.floor(Math.random() * sizes.length)];
+        const img = billImages[Math.floor(Math.random() * billImages.length)];
+
+        bill.style.setProperty('--bill-width', size.w + 'px');
+        bill.style.setProperty('--bill-height', size.h + 'px');
+        bill.style.setProperty('--bill-img', `url(${img})`);
+        bill.style.left = (-10 + Math.random() * 120) + 'vw';
+        bill.style.setProperty('--fall-duration', (2 + Math.random() * 1.5) + 's');
+        bill.style.setProperty('--fall-delay', (waveDelay + Math.random() * 0.5) + 's');
+        // Random spin amounts
+        bill.style.setProperty('--spin-x', (360 + Math.random() * 720) * (Math.random() > 0.5 ? 1 : -1) + 'deg');
+        bill.style.setProperty('--spin-y', (360 + Math.random() * 720) * (Math.random() > 0.5 ? 1 : -1) + 'deg');
+        bill.style.setProperty('--spin-z', (180 + Math.random() * 360) * (Math.random() > 0.5 ? 1 : -1) + 'deg');
+        bill.style.setProperty('--start-rot', (Math.random() * 360) + 'deg');
+
+        overlay.appendChild(bill);
+      }
     }
 
     document.body.appendChild(overlay);
-    setTimeout(() => overlay.remove(), 2500);
+    setTimeout(() => overlay.remove(), 3000);
   }
 
   function handleKonamiInput(direction) {
-    // Skip if already unlocked secret mode
-    if (state.secretUnlocked) return;
-
-    // Only allow Konami on enter screen (before clicking enter)
-    if (!elements.enterScreen.classList.contains('active')) return;
+    // On enter screen before unlock - full Konami flow
+    const isEnterScreen = elements.enterScreen.classList.contains('active');
 
     // Hide password box on first Konami input if it's showing
-    if (state.konamiProgress === 0 && direction === 'up' && state.passwordShowing) {
+    if (isEnterScreen && state.konamiProgress === 0 && direction === 'up' && state.passwordShowing) {
       elements.passwordContainer.classList.add('dismissed');
     }
 
     if (KONAMI_SEQUENCE[state.konamiProgress] === direction) {
       state.konamiProgress++;
-      updateKonamiDots();
+      if (isEnterScreen) updateKonamiDots();
 
       if (state.konamiProgress === KONAMI_SEQUENCE.length) {
-        // Konami unlocks secret mode directly
+        state.konamiProgress = 0; // Reset for next time
+
+        // If already unlocked, just show cash rain (and go to player if on enter screen)
+        if (state.secretUnlocked) {
+          showCashRain();
+          if (isEnterScreen) {
+            setTimeout(() => startPlayer(), 2500);
+          }
+          return;
+        }
+
+        // First time unlock
         state.secretUnlocked = true;
         state.mode = MODES.SECRET;
         setAccessLevel(ACCESS_LEVELS.SECRET);
@@ -824,9 +856,20 @@
       return;
     }
 
-    // Check if we have valid cookies
+    // Check if we have valid CloudFront cookies
     if (!hasValidCookies()) {
+      // Returning user with expired CloudFront cookies - try to refresh them
+      if (getStoredAccessLevel() >= ACCESS_LEVELS.AUTHENTICATED && SIGNED_COOKIES) {
+        if (setSignedCookies()) {
+          startPlayer();
+          return;
+        }
+      }
+      // Show password prompt and reset link for returning users
       showPasswordPrompt();
+      if (getStoredAccessLevel() >= ACCESS_LEVELS.AUTHENTICATED) {
+        elements.resetLink.classList.remove('hidden');
+      }
       return;
     }
     startPlayer();
@@ -941,27 +984,21 @@
       return;
     }
 
-    // Konami code detection (works on any screen if not yet unlocked)
-    if (!state.secretUnlocked) {
-      if (e.code === 'ArrowUp') {
-        e.preventDefault();
-        handleKonamiInput('up');
-        return;
-      }
-      if (e.code === 'ArrowDown') {
-        e.preventDefault();
-        handleKonamiInput('down');
-        return;
-      }
-      if (e.code === 'ArrowLeft') {
-        e.preventDefault();
-        handleKonamiInput('left');
-        return;
-      }
-      if (e.code === 'ArrowRight') {
-        e.preventDefault();
-        handleKonamiInput('right');
-        return;
+    // Konami code detection (works on any screen, can retrigger cash rain)
+    // On player screen, only start tracking if first input is 'up'
+    const isPlayerScreen = elements.playerScreen.classList.contains('active');
+    if (isPlayerScreen && state.konamiProgress === 0 && e.code !== 'ArrowUp') {
+      // Don't intercept arrow keys on player unless starting Konami
+    } else if (e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+      // If we're mid-Konami or starting with up, handle it
+      if (state.konamiProgress > 0 || e.code === 'ArrowUp') {
+        const direction = e.code.replace('Arrow', '').toLowerCase();
+        handleKonamiInput(direction);
+        // Only prevent default if we're actively in Konami sequence
+        if (state.konamiProgress > 0) {
+          e.preventDefault();
+          return;
+        }
       }
     }
 
@@ -1210,6 +1247,15 @@
           e.preventDefault();
           handlePasswordSubmit();
         }
+      });
+    }
+
+    // Reset link - clear all cookies and reload
+    if (elements.resetLink) {
+      elements.resetLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearAllCookies();
+        window.location.reload();
       });
     }
 

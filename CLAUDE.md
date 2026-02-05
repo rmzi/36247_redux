@@ -37,6 +37,9 @@ terraform apply
 - Signed cookies required for audio streaming
 - No public manifest = track list not crawlable
 
+## Analytics
+- GA4 tracking for usage insights (song plays, skips, downloads, searches)
+
 ## Development
 - On localhost, ENTER grants full permissions (secret mode)
 - See `docs/README.md` for detailed setup instructions
