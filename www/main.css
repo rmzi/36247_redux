@@ -586,6 +586,14 @@ body::after {
   margin-bottom: 15px;
 }
 
+.track-list-hint {
+  font-size: 10px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 8px;
+  letter-spacing: 0.05em;
+}
+
 .track-search {
   width: 100%;
   background: transparent;
@@ -608,25 +616,17 @@ body::after {
 .track-list {
   max-height: clamp(200px, 40vh, 300px);
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--muted) transparent;
+  /* Hide scrollbar but keep scrolling */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Fade at bottom to indicate more content */
+  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  padding-bottom: 20px;
 }
 
 .track-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.track-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.track-list::-webkit-scrollbar-thumb {
-  background: var(--muted);
-  border-radius: 3px;
-}
-
-.track-list::-webkit-scrollbar-thumb:hover {
-  background: var(--fg);
+  display: none;
 }
 
 .track-item {
@@ -674,7 +674,7 @@ body::after {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: clamp(12px, 2.5vw, 14px);
+  font-size: clamp(14px, 3vw, 16px);
 }
 
 .track-item-artist {
