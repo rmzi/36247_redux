@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>36247 - Auth</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container { text-align: center; }
+    h1 { font-size: 48px; font-weight: normal; letter-spacing: 0.2em; margin-bottom: 40px; }
+    .status { color: #666; margin-bottom: 20px; }
+    .success { color: #0f0; }
+    .error { color: #f00; }
+    a {
+      color: #fff;
+      border: 2px solid #fff;
+      padding: 15px 60px;
+      text-decoration: none;
+      display: inline-block;
+      letter-spacing: 0.1em;
+    }
+    a:hover { background: #fff; color: #000; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>36247</h1>
+    <p id="status" class="status">Setting cookies...</p>
+    <a id="enter-link" href="/" style="display:none">ENTER</a>
+  </div>
+
+  <script>
+    // COOKIES_PLACEHOLDER - This gets replaced by the deploy script
+    const SIGNED_COOKIES = null;
+
+    function setCookies() {
+      const status = document.getElementById('status');
+      const enterLink = document.getElementById('enter-link');
+
+      if (!SIGNED_COOKIES) {
+        status.textContent = 'Cookies not configured. Run: python tools/deploy-cookies.py';
+        status.className = 'status error';
+        return;
+      }
+
+      try {
+        // Set each cookie
+        for (const [name, value] of Object.entries(SIGNED_COOKIES)) {
+          document.cookie = `${name}=${value}; path=/; secure; samesite=strict; max-age=86400`;
+        }
+
+        status.textContent = 'Cookies set! Valid for 24 hours.';
+        status.className = 'status success';
+        enterLink.style.display = 'inline-block';
+
+        // Auto-redirect after 2 seconds
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      } catch (e) {
+        status.textContent = 'Failed to set cookies: ' + e.message;
+        status.className = 'status error';
+      }
+    }
+
+    setCookies();
+  </script>
+</body>
+</html>

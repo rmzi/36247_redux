@@ -147,3 +147,13 @@ override.tf.json
 # example: *tfplan*
 
 # End of https://www.gitignore.io/api/osx,node,terraform
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Large archives (moved to external drive)
+fffff.at-archive/
+
+# Artwork is in S3, not git
+metadata/artwork/

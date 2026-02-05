@@ -1,0 +1,23 @@
+{
+  "name": "36247_redux-main",
+  "version": "1.0.0",
+  "description": "Remake of 36 Mafia player made by the lovely folks @ F.A.T.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:chromium": "playwright test --project=chromium",
+    "deploy": "AWS_PROFILE=personal aws s3 sync www/ s3://36247-site.rmzi.world/ --exclude '*.html' && AWS_PROFILE=personal aws s3 cp www/index.html s3://36247-site.rmzi.world/index.html",
+    "deploy:cookies": "source tools/.venv/bin/activate && python tools/deploy-cookies.py"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.1"
+  }
+}
