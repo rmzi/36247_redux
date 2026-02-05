@@ -9,8 +9,11 @@
   const CONFIG = {
     STORAGE_KEY: '36247_heard_tracks',
     COOKIE_NAMES: ['CloudFront-Policy', 'CloudFront-Signature', 'CloudFront-Key-Pair-Id'],
-    AUTH_URL: '/auth.html'
+    PASSWORD: 'ayemanesaymane'
   };
+
+  // COOKIES_PLACEHOLDER - replaced by deploy-cookies.py
+  const SIGNED_COOKIES = null;
 
   // Konami code sequence: up up down down left right left right
   const KONAMI_SEQUENCE = ['up', 'up', 'down', 'down', 'left', 'right', 'left', 'right'];
@@ -21,6 +24,55 @@
     return CONFIG.COOKIE_NAMES.every(name =>
       document.cookie.split(';').some(c => c.trim().startsWith(name + '='))
     );
+  }
+
+  // Set CloudFront cookies
+  function setSignedCookies() {
+    if (!SIGNED_COOKIES) {
+      console.error('Signed cookies not configured');
+      return false;
+    }
+    try {
+      for (const [name, value] of Object.entries(SIGNED_COOKIES)) {
+        document.cookie = `${name}=${value}; path=/; secure; samesite=strict; max-age=86400`;
+      }
+      return true;
+    } catch (e) {
+      console.error('Failed to set cookies:', e);
+      return false;
+    }
+  }
+
+  // Show password prompt
+  function showPasswordPrompt() {
+    elements.passwordContainer.classList.remove('hidden');
+    elements.passwordInput.focus();
+  }
+
+  // Hide password prompt
+  function hidePasswordPrompt() {
+    elements.passwordContainer.classList.add('hidden');
+    elements.passwordError.classList.remove('visible');
+    elements.passwordInput.value = '';
+  }
+
+  // Validate password and set cookies
+  function handlePasswordSubmit() {
+    const password = elements.passwordInput.value;
+    if (password === CONFIG.PASSWORD) {
+      if (setSignedCookies()) {
+        hidePasswordPrompt();
+        startPlayer();
+      } else {
+        elements.passwordError.textContent = 'cookie error';
+        elements.passwordError.classList.add('visible');
+      }
+    } else {
+      elements.passwordError.textContent = 'wrong';
+      elements.passwordError.classList.add('visible');
+      elements.passwordInput.value = '';
+      elements.passwordInput.focus();
+    }
   }
 
   // Modes
@@ -79,7 +131,10 @@
     trackSearch: document.getElementById('track-search'),
     konamiProgress: document.getElementById('konami-progress'),
     artworkContainer: document.getElementById('artwork-container'),
-    artworkImage: document.getElementById('artwork-image')
+    artworkImage: document.getElementById('artwork-image'),
+    passwordContainer: document.getElementById('password-container'),
+    passwordInput: document.getElementById('password-input'),
+    passwordError: document.getElementById('password-error')
   };
 
   // Utility functions
@@ -538,6 +593,17 @@
 
   // Event handlers
   async function handleEnter() {
+    // Check if we have valid cookies
+    if (!hasValidCookies()) {
+      // No cookies - show password prompt
+      showPasswordPrompt();
+      return;
+    }
+    // Have cookies - start player
+    startPlayer();
+  }
+
+  async function startPlayer() {
     try {
       await loadManifest();
       loadHeardTracks();
@@ -581,12 +647,10 @@
   }
 
   function handleRetry() {
-    // If no cookies, go to auth page
-    if (!hasValidCookies()) {
-      window.location.href = CONFIG.AUTH_URL;
-      return;
-    }
     showScreen('enter-screen');
+    if (!hasValidCookies()) {
+      showPasswordPrompt();
+    }
   }
 
   function handleProgressClick(e) {
@@ -709,6 +773,16 @@
 
     if (elements.trackSearch) {
       elements.trackSearch.addEventListener('input', handleSearch);
+    }
+
+    // Password input - submit on Enter key
+    if (elements.passwordInput) {
+      elements.passwordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handlePasswordSubmit();
+        }
+      });
     }
 
     // Handle audio errors

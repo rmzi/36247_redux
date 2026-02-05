@@ -97,37 +97,37 @@ def main():
 
     print(f"Cookies valid until: {expires.isoformat()}")
 
-    # Read auth.html template
+    # Read main.js template
     script_dir = Path(__file__).parent
-    auth_template = script_dir.parent / 'www' / 'auth.html'
+    main_js_path = script_dir.parent / 'www' / 'main.js'
 
-    with open(auth_template) as f:
-        html = f.read()
+    with open(main_js_path) as f:
+        js = f.read()
 
     # Embed cookies
     cookies_js = json.dumps(cookies, indent=2)
-    html = re.sub(
+    js = re.sub(
         r'const SIGNED_COOKIES = null;',
         f'const SIGNED_COOKIES = {cookies_js};',
-        html
+        js
     )
 
     if args.dry_run:
-        print("\n[DRY RUN] Would deploy auth.html with cookies:")
+        print("\n[DRY RUN] Would deploy main.js with cookies:")
         print(f"  Expires: {expires.isoformat()}")
         print(f"  Key-Pair-Id: {key_pair_id}")
         return 0
 
     # Upload to S3
-    print("Uploading auth.html to S3...")
+    print("Uploading main.js to S3...")
     session = boto3.Session(profile_name=AWS_PROFILE, region_name=AWS_REGION)
     s3 = session.client('s3')
 
     s3.put_object(
         Bucket=SITE_BUCKET,
-        Key='auth.html',
-        Body=html,
-        ContentType='text/html',
+        Key='main.js',
+        Body=js,
+        ContentType='application/javascript',
         CacheControl='no-cache, no-store, must-revalidate'
     )
 
@@ -137,13 +137,13 @@ def main():
     cf.create_invalidation(
         DistributionId=CLOUDFRONT_DISTRIBUTION_ID,
         InvalidationBatch={
-            'Paths': {'Quantity': 1, 'Items': ['/auth.html']},
+            'Paths': {'Quantity': 1, 'Items': ['/main.js']},
             'CallerReference': str(datetime.now(timezone.utc).timestamp())
         }
     )
 
-    print(f"\nDone! Auth page deployed.")
-    print(f"  URL: https://{DOMAIN}/auth.html")
+    print(f"\nDone! main.js deployed with cookies.")
+    print(f"  URL: https://{DOMAIN}/")
     print(f"  Valid until: {expires.isoformat()}")
 
     return 0
