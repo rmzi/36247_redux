@@ -158,3 +158,6 @@ fffff.at-archive/
 
 # Artwork is in S3, not git
 metadata/artwork/
+
+# Local dev manifest (copy from production for testing)
+www/manifest.json

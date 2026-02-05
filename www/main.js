@@ -481,8 +481,9 @@
   // Manifest functions
   async function loadManifest() {
     try {
+      // On localhost, try local manifest first (copy from production for dev)
       const response = await fetch('/manifest.json', {
-        credentials: 'include'
+        credentials: isLocalhost() ? 'omit' : 'include'
       });
 
       if (!response.ok) {
@@ -568,7 +569,7 @@
       const artist = track.artist || '???';
       const title = track.title || '???';
       const year = track.year || '';
-      const artworkSrc = track.artwork ? '/' + track.artwork : '';
+      const artworkSrc = track.artwork ? getMediaUrl(track.artwork) : '';
       const thumbClass = artworkSrc ? '' : 'no-art';
 
       return `
@@ -632,7 +633,7 @@
     if (!elements.artworkContainer || !elements.artworkImage) return;
 
     if (track.artwork) {
-      elements.artworkImage.src = '/' + track.artwork;
+      elements.artworkImage.src = getMediaUrl(track.artwork);
       elements.artworkImage.alt = `${track.artist || 'Unknown'} - ${track.album || 'Unknown'}`;
       elements.artworkContainer.classList.remove('no-art');
     } else {
@@ -681,7 +682,7 @@
     }
     updateBackButton();
 
-    const audioUrl = '/' + track.path;
+    const audioUrl = getMediaUrl(track.path);
 
     try {
       elements.audio.src = audioUrl;
@@ -744,7 +745,7 @@
   }
 
   function downloadTrack(track) {
-    const audioUrl = '/' + track.path;
+    const audioUrl = getMediaUrl(track.path);
     const filename = `${track.artist || 'Unknown'} - ${track.title || 'Unknown'}.mp3`;
 
     // Fetch the file and trigger download
@@ -974,6 +975,14 @@
   // Localhost check - grants full permissions
   function isLocalhost() {
     return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  }
+
+  // Get media URL - on localhost, point to production for audio/artwork
+  const PROD_URL = 'https://36247.rmzi.world';
+  function getMediaUrl(path) {
+    if (!path) return '';
+    const url = '/' + path;
+    return isLocalhost() ? PROD_URL + url : url;
   }
 
   // Initialize
