@@ -1048,16 +1048,68 @@
       });
     }
 
-    // Image modal for Stout Junts artwork
+    // Image carousel for Stout Junts artwork
+    let carouselImages = [];
+    let carouselIndex = 0;
+
+    function updateCarousel() {
+      if (!elements.imageModalImg) return;
+      elements.imageModalImg.src = carouselImages[carouselIndex];
+
+      // Update arrows
+      const prevBtn = document.getElementById('image-modal-prev');
+      const nextBtn = document.getElementById('image-modal-next');
+      if (prevBtn) prevBtn.classList.toggle('hidden', carouselImages.length <= 1);
+      if (nextBtn) nextBtn.classList.toggle('hidden', carouselImages.length <= 1);
+
+      // Update dots
+      const dotsContainer = document.getElementById('image-modal-dots');
+      if (dotsContainer) {
+        dotsContainer.innerHTML = carouselImages.length > 1
+          ? carouselImages.map((_, i) =>
+              `<span class="carousel-dot ${i === carouselIndex ? 'active' : ''}" data-index="${i}"></span>`
+            ).join('')
+          : '';
+      }
+    }
+
     document.querySelectorAll('.sj-thumb').forEach(thumb => {
       thumb.addEventListener('click', (e) => {
         e.preventDefault();
         if (elements.imageModal && elements.imageModalImg) {
-          elements.imageModalImg.src = thumb.src;
-          elements.imageModalImg.alt = thumb.alt;
+          const imagesAttr = thumb.dataset.images || thumb.src;
+          carouselImages = imagesAttr.split(',').map(s => s.trim());
+          carouselIndex = 0;
+          updateCarousel();
           elements.imageModal.classList.remove('hidden');
         }
       });
+    });
+
+    // Carousel navigation
+    const prevBtn = document.getElementById('image-modal-prev');
+    const nextBtn = document.getElementById('image-modal-next');
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        carouselIndex = (carouselIndex - 1 + carouselImages.length) % carouselImages.length;
+        updateCarousel();
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        carouselIndex = (carouselIndex + 1) % carouselImages.length;
+        updateCarousel();
+      });
+    }
+
+    // Dot navigation
+    document.getElementById('image-modal-dots')?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('carousel-dot')) {
+        carouselIndex = parseInt(e.target.dataset.index);
+        updateCarousel();
+      }
     });
 
     if (elements.imageModalClose) {

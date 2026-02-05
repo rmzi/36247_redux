@@ -940,11 +940,14 @@ body::after {
   text-decoration: underline;
 }
 
-/* Image modal */
+/* Image modal carousel */
 .image-modal-content {
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .image-modal-content .modal-close {
@@ -959,9 +962,63 @@ body::after {
 }
 
 #image-modal-img {
-  max-width: 90vw;
-  max-height: 85vh;
+  max-width: 80vw;
+  max-height: 80vh;
   object-fit: contain;
+}
+
+.carousel-arrow {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--muted);
+  color: var(--fg);
+  font-size: 32px;
+  width: 40px;
+  height: 60px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.carousel-arrow:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.carousel-arrow:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.carousel-arrow.hidden {
+  visibility: hidden;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.carousel-dot.active {
+  background: var(--fg);
+}
+
+.carousel-dot:hover {
+  background: var(--fg);
 }
 
 .modal-links {

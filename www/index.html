@@ -172,21 +172,25 @@
             <div class="stout-junts-grid">
               <div class="stout-junt">
                 <a href="https://www.mixcloud.com/bodywerk/stout-junts-vol-1-w-rmzi/" target="_blank" rel="noopener" class="sj-vol">Vol. 1</a>
-                <img src="/stout_junts_images/sj_v1_front.jpg" alt="Stout Junts Vol. 1" class="sj-thumb">
+                <img src="/stout_junts_images/sj_v1_front.jpg" alt="Stout Junts Vol. 1" class="sj-thumb"
+                     data-images="/stout_junts_images/sj_v1_front.jpg,/stout_junts_images/sj_v1_back.jpg">
               </div>
               <div class="stout-junt">
                 <a href="https://soundcloud.com/halfmoonbk/41023-stout-junts-w-rmzi-ft-qemist" target="_blank" rel="noopener" class="sj-vol">Vol. 2</a>
-                <img src="/stout_junts_images/sj_2_front.jpg" alt="Stout Junts Vol. 2" class="sj-thumb">
+                <img src="/stout_junts_images/sj_2_front.jpg" alt="Stout Junts Vol. 2" class="sj-thumb"
+                     data-images="/stout_junts_images/sj_2_front.jpg">
                 <span class="sj-collab"><strong>w/ <a href="https://instagram.com/qemmy_" target="_blank" rel="noopener">Qemist</a></strong></span>
               </div>
               <div class="stout-junt">
                 <a href="https://www.mixcloud.com/bodywerk/stout-junts-vol-3-ft-ross-al-ghul/" target="_blank" rel="noopener" class="sj-vol">Vol. 3</a>
-                <img src="/stout_junts_images/sj_3_front.jpg" alt="Stout Junts Vol. 3" class="sj-thumb">
+                <img src="/stout_junts_images/sj_3_front.jpg" alt="Stout Junts Vol. 3" class="sj-thumb"
+                     data-images="/stout_junts_images/sj_3_front.jpg,/stout_junts_images/sj_3_back.jpg">
                 <span class="sj-collab"><strong>w/ <a href="https://instagram.com/fallsglen" target="_blank" rel="noopener">Just Ross</a></strong></span>
               </div>
               <div class="stout-junt">
                 <a href="https://www.mixcloud.com/8ballradio/guest-set-rmzi-stout-junts-vol-4/" target="_blank" rel="noopener" class="sj-vol">Vol. 4</a>
-                <img src="/stout_junts_images/sj_4_front.jpg" alt="Stout Junts Vol. 4" class="sj-thumb">
+                <img src="/stout_junts_images/sj_4_front.jpg" alt="Stout Junts Vol. 4" class="sj-thumb"
+                     data-images="/stout_junts_images/sj_4_front.jpg,/stout_junts_images/sj_4_back.jpg">
               </div>
             </div>
           </div>
@@ -202,12 +206,15 @@
       </div>
     </div>
 
-    <!-- Image modal for Stout Junts artwork -->
+    <!-- Image modal carousel for Stout Junts artwork -->
     <div id="image-modal" class="modal hidden">
       <div class="modal-backdrop"></div>
       <div class="image-modal-content">
         <button id="image-modal-close" class="modal-close">&times;</button>
+        <button id="image-modal-prev" class="carousel-arrow prev">&#8249;</button>
         <img id="image-modal-img" src="" alt="">
+        <button id="image-modal-next" class="carousel-arrow next">&#8250;</button>
+        <div id="image-modal-dots" class="carousel-dots"></div>
       </div>
     </div>
   </div>
