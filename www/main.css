@@ -259,6 +259,19 @@ body::after {
   visibility: visible;
 }
 
+/* Welcome back message for returning users */
+.welcome-back {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  margin-bottom: 20px;
+  text-transform: lowercase;
+}
+
+.welcome-back.hidden {
+  display: none;
+}
+
 /* Konami progress dots - minimal */
 .konami-progress {
   display: flex;
@@ -977,13 +990,26 @@ body::after {
 
 .image-modal-content .modal-close {
   position: absolute;
-  top: -30px;
-  right: 0;
-  background: none;
-  border: none;
+  top: -40px;
+  right: -10px;
+  background: var(--bg);
+  border: 1px solid var(--muted);
   color: var(--fg);
-  font-size: 30px;
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.image-modal-content .modal-close:hover {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
 }
 
 #image-modal-img {

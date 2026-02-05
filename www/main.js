@@ -183,6 +183,7 @@
     passwordContainer: document.getElementById('password-container'),
     passwordInput: document.getElementById('password-input'),
     passwordError: document.getElementById('password-error'),
+    welcomeBack: document.getElementById('welcome-back'),
     volumeSlider: document.getElementById('volume-slider'),
     volumeValue: document.getElementById('volume-value'),
     infoTrigger: document.getElementById('info-trigger'),
@@ -352,14 +353,14 @@
   }
 
   function handleKonamiInput(direction) {
-    // Skip if already unlocked super mode
+    // Skip if already unlocked secret mode
     if (state.secretUnlocked) return;
 
-    // Only allow Konami after ENTER is clicked (password box visible)
-    if (!state.passwordShowing) return;
+    // Only allow Konami on enter screen (before clicking enter)
+    if (!elements.enterScreen.classList.contains('active')) return;
 
-    // Hide password box on first Konami input
-    if (state.konamiProgress === 0 && direction === 'up') {
+    // Hide password box on first Konami input if it's showing
+    if (state.konamiProgress === 0 && direction === 'up' && state.passwordShowing) {
       elements.passwordContainer.classList.add('dismissed');
     }
 
@@ -993,18 +994,19 @@
       downloadTrack(state.currentTrack);
     }
 
-    // Arrow keys for seeking (only after super unlocked, otherwise Konami takes priority)
-    if (state.secretUnlocked && e.code === 'ArrowRight' && state.currentTrack) {
-      e.preventDefault();
-      elements.audio.currentTime = Math.min(
-        elements.audio.duration,
-        elements.audio.currentTime + 10
-      );
-    }
-
-    if (state.secretUnlocked && e.code === 'ArrowLeft' && state.currentTrack) {
-      e.preventDefault();
-      elements.audio.currentTime = Math.max(0, elements.audio.currentTime - 10);
+    // Arrow keys for seeking (on player screen, when not entering Konami)
+    if (elements.playerScreen.classList.contains('active') && state.currentTrack) {
+      if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        elements.audio.currentTime = Math.min(
+          elements.audio.duration,
+          elements.audio.currentTime + 10
+        );
+      }
+      if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        elements.audio.currentTime = Math.max(0, elements.audio.currentTime - 10);
+      }
     }
 
     // / for search (super modes)
@@ -1056,6 +1058,10 @@
       } else {
         state.mode = MODES.REGULAR;
       }
+      // Show welcome back for returning users
+      if (accessLevel >= ACCESS_LEVELS.AUTHENTICATED && elements.welcomeBack) {
+        elements.welcomeBack.classList.remove('hidden');
+      }
       console.log('36247 initialized - access level:', accessLevel);
     } else {
       console.log('36247 initialized - localhost mode');
@@ -1066,6 +1072,10 @@
 
     // Bind event listeners
     elements.enterBtn.addEventListener('click', handleEnter);
+    elements.enterBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      handleEnter();
+    });
     if (elements.backBtn) {
       elements.backBtn.addEventListener('click', playPreviousTrack);
     }
