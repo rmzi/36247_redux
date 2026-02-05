@@ -17,8 +17,7 @@
   const ACCESS_LEVELS = {
     GUEST: 0,
     AUTHENTICATED: 1,
-    SUPER: 2,
-    SECRET: 3
+    SECRET: 2
   };
 
   // COOKIES_PLACEHOLDER - replaced by deploy-cookies.py
@@ -113,7 +112,6 @@
   // Modes
   const MODES = {
     REGULAR: 'regular',
-    SUPER: 'super',
     SECRET: 'secret'
   };
 
@@ -129,9 +127,7 @@
     searchQuery: '',
     // Konami state
     konamiProgress: 0,
-    superUnlocked: false,
     secretUnlocked: false,
-    waitingForBA: false,
     pressedB: false,
     // Touch tracking
     touchStartX: 0,
@@ -257,8 +253,8 @@
   }
 
   // Mode helpers
-  function isSuperMode() {
-    return state.mode === MODES.SUPER || state.mode === MODES.SECRET;
+  function isSecretMode() {
+    return state.mode === MODES.SECRET;
   }
 
   function isSecretMode() {
@@ -348,7 +344,7 @@
 
   function handleKonamiInput(direction) {
     // Skip if already unlocked super mode
-    if (state.superUnlocked) return;
+    if (state.secretUnlocked) return;
 
     // Only allow Konami after ENTER is clicked (password box visible)
     if (!state.passwordShowing) return;
@@ -363,17 +359,20 @@
       updateKonamiDots();
 
       if (state.konamiProgress === KONAMI_SEQUENCE.length) {
-        state.superUnlocked = true;
-        state.waitingForBA = true;
-        state.mode = MODES.SUPER;
-        setAccessLevel(ACCESS_LEVELS.SUPER);
+        // Konami unlocks secret mode directly
+        state.secretUnlocked = true;
+        state.mode = MODES.SECRET;
+        setAccessLevel(ACCESS_LEVELS.SECRET);
         flashKonamiSuccess();
-        showSecretHint();
-        // Dismiss password box if still visible
+        setSignedCookies();
+        showCashRain();
+        // Dismiss password box if visible
         if (!elements.passwordContainer.classList.contains('hidden') &&
             !elements.passwordContainer.classList.contains('dismissed')) {
           elements.passwordContainer.classList.add('dismissed');
         }
+        // Go to player after animation
+        setTimeout(() => startPlayer(), 2500);
       }
     } else if (direction) {
       flashKonamiError();
@@ -474,7 +473,7 @@
     state.heardTracks.add(trackId);
     saveHeardTracks();
     updateCatalogProgress();
-    if (isSuperMode()) {
+    if (isSecretMode()) {
       renderTrackList();
     }
   }
@@ -512,14 +511,14 @@
 
   // Clickable metadata search (super/secret modes)
   function searchFor(query) {
-    if (!query || !isSuperMode()) return;
+    if (!query || !isSecretMode()) return;
     elements.trackSearch.value = query;
     filterTracks(query);
     elements.trackSearch.scrollIntoView({ behavior: 'smooth' });
   }
 
   function setupClickableMetadata() {
-    if (!isSuperMode()) return;
+    if (!isSecretMode()) return;
 
     const clickables = [elements.artist, elements.album, elements.artworkImage];
     clickables.forEach(el => {
@@ -697,7 +696,7 @@
       }
 
       // Update track list highlighting
-      if (isSuperMode()) {
+      if (isSecretMode()) {
         renderTrackList();
       }
     } catch (e) {
@@ -777,13 +776,20 @@
 
   // Event handlers
   async function handleEnter() {
+    // Localhost gets full permissions, no cookies
+    if (isLocalhost()) {
+      console.log('🔧 Localhost - secret mode');
+      state.mode = MODES.SECRET;
+      state.secretUnlocked = true;
+      startPlayer();
+      return;
+    }
+
     // Check if we have valid cookies
     if (!hasValidCookies()) {
-      // No cookies - show password prompt
       showPasswordPrompt();
       return;
     }
-    // Have cookies - start player
     startPlayer();
   }
 
@@ -794,7 +800,7 @@
       updateCatalogProgress();
 
       // Setup UI based on mode
-      if (isSuperMode()) {
+      if (isSecretMode()) {
         elements.trackListContainer.classList.remove('hidden');
         renderTrackList();
       }
@@ -874,7 +880,7 @@
     }
 
     // Konami code detection (works on any screen if not yet unlocked)
-    if (!state.superUnlocked) {
+    if (!state.secretUnlocked) {
       if (e.code === 'ArrowUp') {
         e.preventDefault();
         handleKonamiInput('up');
@@ -927,7 +933,7 @@
     }
 
     // Arrow keys for seeking (only after super unlocked, otherwise Konami takes priority)
-    if (state.superUnlocked && e.code === 'ArrowRight' && state.currentTrack) {
+    if (state.secretUnlocked && e.code === 'ArrowRight' && state.currentTrack) {
       e.preventDefault();
       elements.audio.currentTime = Math.min(
         elements.audio.duration,
@@ -935,13 +941,13 @@
       );
     }
 
-    if (state.superUnlocked && e.code === 'ArrowLeft' && state.currentTrack) {
+    if (state.secretUnlocked && e.code === 'ArrowLeft' && state.currentTrack) {
       e.preventDefault();
       elements.audio.currentTime = Math.max(0, elements.audio.currentTime - 10);
     }
 
     // / for search (super modes)
-    if (e.code === 'Slash' && isSuperMode()) {
+    if (e.code === 'Slash' && isSecretMode()) {
       e.preventDefault();
       elements.trackSearch.focus();
     }
@@ -953,8 +959,6 @@
       window.location.reload();
     }
 
-    // Debug shortcuts (Shift + 1-4)
-    handleDebugKeys(e);
   }
 
   function clearAllCookies() {
@@ -967,89 +971,26 @@
     console.log('Cookies cleared');
   }
 
-  // Debug mode - check URL params (localhost only)
+  // Localhost check - grants full permissions
   function isLocalhost() {
     return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   }
 
-  function checkDebugMode() {
-    if (!isLocalhost()) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const debugMode = params.get('debug');
-
-    if (debugMode) {
-      console.log('🔧 Debug mode:', debugMode);
-
-      // Set mode directly
-      if (debugMode === 'super') {
-        state.mode = MODES.SUPER;
-        state.superUnlocked = true;
-        setAccessLevel(ACCESS_LEVELS.SUPER);
-        setSignedCookies();
-      } else if (debugMode === 'secret') {
-        state.mode = MODES.SECRET;
-        state.superUnlocked = true;
-        state.secretUnlocked = true;
-        setAccessLevel(ACCESS_LEVELS.SECRET);
-        setSignedCookies();
-      } else if (debugMode === 'auth') {
-        setAccessLevel(ACCESS_LEVELS.AUTHENTICATED);
-        setSignedCookies();
-      } else if (debugMode === 'guest') {
-        clearAllCookies();
-        state.mode = MODES.REGULAR;
-      }
-
-      // Skip enter screen if authenticated
-      if (debugMode !== 'guest' && debugMode !== 'enter') {
-        setTimeout(() => startPlayer(), 100);
-      }
-    }
-  }
-
-  // Debug keyboard shortcuts (Shift + number) - localhost only
-  function handleDebugKeys(e) {
-    if (!e.shiftKey || !isLocalhost()) return;
-
-    // Shift+1 = guest, Shift+2 = auth, Shift+3 = super, Shift+4 = secret
-    if (e.code === 'Digit1') {
-      console.log('🔧 Debug: Guest mode');
-      clearAllCookies();
-      window.location.search = '?debug=guest';
-    } else if (e.code === 'Digit2') {
-      console.log('🔧 Debug: Authenticated mode');
-      window.location.search = '?debug=auth';
-    } else if (e.code === 'Digit3') {
-      console.log('🔧 Debug: Super mode');
-      window.location.search = '?debug=super';
-    } else if (e.code === 'Digit4') {
-      console.log('🔧 Debug: Secret mode');
-      window.location.search = '?debug=secret';
-    }
-  }
-
   // Initialize
   function init() {
-    // Restore state from access cookie
-    const accessLevel = getStoredAccessLevel();
-
-    if (accessLevel >= ACCESS_LEVELS.SECRET) {
-      state.mode = MODES.SECRET;
-      state.superUnlocked = true;
-      state.secretUnlocked = true;
-    } else if (accessLevel >= ACCESS_LEVELS.SUPER) {
-      state.mode = MODES.SUPER;
-      state.superUnlocked = true;
-      state.waitingForBA = true;
+    // Restore state from access cookie (production only)
+    if (!isLocalhost()) {
+      const accessLevel = getStoredAccessLevel();
+      if (accessLevel >= ACCESS_LEVELS.SECRET) {
+        state.mode = MODES.SECRET;
+        state.secretUnlocked = true;
+      } else {
+        state.mode = MODES.REGULAR;
+      }
+      console.log('36247 initialized - access level:', accessLevel);
     } else {
-      state.mode = MODES.REGULAR;
+      console.log('36247 initialized - localhost mode');
     }
-
-    console.log('36247 initialized - access level:', accessLevel);
-
-    // Check for debug mode in URL
-    checkDebugMode();
 
     // Check for deep-linked track in URL
     state.pendingTrackPath = getTrackPathFromHash();
