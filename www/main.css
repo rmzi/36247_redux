@@ -340,9 +340,9 @@ body::after {
 
 /* Player Screen */
 .player-container {
-  width: 100%;
+  width: 90%;
   max-width: 800px;
-  padding: 20px;
+  padding: 5%;
   overflow: hidden;
   max-height: 100vh;
   display: flex;
@@ -352,9 +352,9 @@ body::after {
 
 /* Album artwork */
 .artwork-container {
-  width: 280px;
-  height: 280px;
-  margin: 0 auto 20px;
+  width: min(280px, 60vw);
+  height: min(280px, 60vw);
+  margin: 0 auto 5%;
   border: 2px solid var(--muted);
 }
 
@@ -371,14 +371,18 @@ body::after {
 .track-info-wrapper {
   width: 100%;
   overflow: hidden;
-  margin-bottom: 30px;
+  margin-bottom: clamp(15px, 4vw, 30px);
+  /* Fixed height prevents UI jumping when text wraps */
+  min-height: clamp(60px, 12vw, 80px);
+  display: flex;
+  align-items: center;
 }
 
 .track-info {
   display: flex;
   align-items: center;
-  gap: 15px;
-  font-size: 16px;
+  gap: clamp(8px, 2vw, 15px);
+  font-size: clamp(12px, 2.5vw, 16px);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   justify-content: center;
@@ -390,10 +394,14 @@ body::after {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   gap: 2px;
   flex: 1 1 0;
-  min-width: 60px;
-  max-width: 200px;
+  min-width: 50px;
+  max-width: 25%;
+  /* Fixed height for each item - accommodates 2-3 lines */
+  height: clamp(45px, 10vw, 60px);
+  overflow: hidden;
 }
 
 /* Year column stays compact */
@@ -461,8 +469,8 @@ body::after {
   display: flex;
   justify-content: center;
   gap: 5px;
-  margin-bottom: 30px;
-  font-size: 12px;
+  margin-bottom: clamp(15px, 4vw, 30px);
+  font-size: clamp(10px, 2vw, 12px);
   color: var(--muted);
 }
 
@@ -470,7 +478,8 @@ body::after {
 .controls {
   display: flex;
   justify-content: center;
-  margin-bottom: 40px;
+  gap: clamp(8px, 2vw, 15px);
+  margin-bottom: clamp(20px, 5vw, 40px);
 }
 
 .control-btn {
@@ -478,8 +487,8 @@ body::after {
   border: 2px solid var(--fg);
   color: var(--fg);
   font-family: var(--font);
-  font-size: 14px;
-  padding: 10px 40px;
+  font-size: clamp(11px, 2vw, 14px);
+  padding: clamp(8px, 2vw, 10px) clamp(20px, 5vw, 40px);
   cursor: pointer;
   letter-spacing: 0.1em;
   transition: all 0.1s ease;
@@ -509,7 +518,7 @@ body::after {
 /* Catalog Progress */
 .catalog-progress {
   text-align: center;
-  font-size: 12px;
+  font-size: clamp(10px, 2vw, 12px);
   color: var(--muted);
   letter-spacing: 0.05em;
 }
@@ -550,9 +559,10 @@ body::after {
 
 /* Track List (Superuser Mode) */
 .track-list-container {
-  margin-top: 30px;
+  margin-top: clamp(15px, 4vw, 30px);
   border-top: 1px solid var(--muted);
-  padding-top: 20px;
+  padding-top: clamp(10px, 3vw, 20px);
+  width: 100%;
 }
 
 .track-list-container.hidden {
@@ -569,8 +579,8 @@ body::after {
   border: 1px solid var(--muted);
   color: var(--fg);
   font-family: var(--font);
-  font-size: 12px;
-  padding: 8px 12px;
+  font-size: clamp(12px, 2.5vw, 14px);
+  padding: clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px);
   outline: none;
 }
 
@@ -583,7 +593,7 @@ body::after {
 }
 
 .track-list {
-  max-height: 300px;
+  max-height: clamp(200px, 40vh, 300px);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--muted) transparent;
@@ -609,8 +619,8 @@ body::after {
 .track-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 0;
+  gap: clamp(8px, 2vw, 10px);
+  padding: clamp(4px, 1vw, 6px) 0;
   border-bottom: 1px solid #222;
   cursor: pointer;
   transition: background 0.1s;
@@ -625,8 +635,8 @@ body::after {
 }
 
 .track-item-thumb {
-  width: 36px;
-  height: 36px;
+  width: clamp(32px, 8vw, 36px);
+  height: clamp(32px, 8vw, 36px);
   object-fit: cover;
   flex-shrink: 0;
   background: #222;
@@ -651,7 +661,7 @@ body::after {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: clamp(12px, 2.5vw, 14px);
 }
 
 .track-item-artist {
@@ -663,7 +673,7 @@ body::after {
 }
 
 .track-item-year {
-  font-size: 10px;
+  font-size: clamp(10px, 2vw, 12px);
   color: var(--muted);
 }
 
@@ -710,8 +720,8 @@ body::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 30px;
+  gap: clamp(6px, 2vw, 10px);
+  margin-bottom: clamp(15px, 4vw, 30px);
 }
 
 .volume-label {
@@ -723,7 +733,7 @@ body::after {
 .volume-slider {
   -webkit-appearance: none;
   appearance: none;
-  width: 100px;
+  width: clamp(60px, 15vw, 100px);
   height: 2px;
   background: var(--muted);
   outline: none;
@@ -1133,95 +1143,22 @@ body::after {
   }
 
   .player-container {
-    padding: 15px;
-    padding-top: 20px;
-    padding-bottom: 30px;
     max-height: none;
     height: auto;
     min-height: 100%;
     overflow: visible;
   }
 
-  .artwork-container {
-    width: 180px;
-    height: 180px;
-    margin-bottom: 15px;
-  }
-
-  .track-info-wrapper {
-    margin-bottom: 20px;
-    width: 100%;
-    overflow: hidden;
-  }
-
   .track-info {
-    font-size: 11px;
-    gap: 8px;
     flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .track-info-item {
-    max-width: 120px;
-    min-width: 50px;
-  }
-
-  .track-info-item span:not(.track-info-label) {
-    font-size: 11px;
-    text-align: center;
-  }
-
-  .track-info-label {
-    font-size: 8px;
   }
 
   .track-info .separator {
     display: none;
   }
 
-  .progress-container {
-    margin-bottom: 8px;
-  }
-
-  .time-display {
-    margin-bottom: 20px;
-    font-size: 11px;
-  }
-
   .controls {
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 25px;
-    justify-content: center;
-  }
-
-  .control-btn {
-    padding: 10px 20px;
-    font-size: 11px;
-  }
-
-  .volume-container {
-    margin-bottom: 20px;
-  }
-
-  .volume-slider {
-    width: 80px;
-  }
-
-  .catalog-progress {
-    font-size: 11px;
-  }
-
-  .info-trigger {
-    margin-top: 20px;
-  }
-
-  .track-list-container {
-    margin-top: 20px;
-  }
-
-  .track-list {
-    max-height: 200px;
   }
 
   /* Modal */
