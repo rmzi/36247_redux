@@ -552,7 +552,7 @@
       state.filteredTracks = [...state.tracks];
     } else {
       state.filteredTracks = state.tracks.filter(t => {
-        const searchStr = `${t.artist || ''} ${t.album || ''} ${t.title || ''}`.toLowerCase();
+        const searchStr = `${t.artist || ''} ${t.album || ''} ${t.title || ''} ${t.year || ''}`.toLowerCase();
         return searchStr.includes(state.searchQuery);
       });
     }
@@ -564,22 +564,22 @@
 
     const html = state.filteredTracks.map(track => {
       const isPlaying = state.currentTrack && state.currentTrack.id === track.id;
-      const isHeard = state.heardTracks.has(track.id);
-
       const playingClass = isPlaying ? 'playing' : '';
       const artist = track.artist || '???';
       const title = track.title || '???';
-
-      let actionsHtml = `<button class="track-item-btn play-btn" data-id="${track.id}">PLAY</button>`;
+      const year = track.year || '';
+      const artworkSrc = track.artwork ? '/' + track.artwork : '';
+      const thumbClass = artworkSrc ? '' : 'no-art';
 
       return `
         <div class="track-item ${playingClass}" data-id="${track.id}">
+          <img class="track-item-thumb ${thumbClass}" src="${artworkSrc}" alt="" loading="lazy">
           <div class="track-item-info">
-            <span class="track-item-artist">${escapeHtml(artist)}</span>
-            <span class="track-item-title">- ${escapeHtml(title)}</span>
-          </div>
-          <div class="track-item-actions">
-            ${actionsHtml}
+            <div class="track-item-main">
+              <span class="track-item-artist">${escapeHtml(artist)}</span>
+              <span class="track-item-title">- ${escapeHtml(title)}</span>
+            </div>
+            ${year ? `<span class="track-item-year">${escapeHtml(year)}</span>` : ''}
           </div>
         </div>
       `;
