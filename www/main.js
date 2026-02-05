@@ -8,16 +8,9 @@
   // Configuration
   const CONFIG = {
     STORAGE_KEY: '36247_heard_tracks',
-    ACCESS_COOKIE: '36247_access',
+    SECRET_KEY: '36247_secret_unlocked',
     COOKIE_NAMES: ['CloudFront-Policy', 'CloudFront-Signature', 'CloudFront-Key-Pair-Id'],
     PASSWORD: 'ayemanesaymane'
-  };
-
-  // Access levels (ordered by privilege)
-  const ACCESS_LEVELS = {
-    GUEST: 0,
-    AUTHENTICATED: 1,
-    SECRET: 2
   };
 
   // COOKIES_PLACEHOLDER - replaced by deploy-cookies.py
@@ -30,28 +23,26 @@
     }
   }
 
-  // Get access level from cookie
-  function getStoredAccessLevel() {
-    const match = document.cookie.match(new RegExp(`${CONFIG.ACCESS_COOKIE}=([^;]+)`));
-    if (match) {
-      const level = ACCESS_LEVELS[match[1].toUpperCase()];
-      return level !== undefined ? level : ACCESS_LEVELS.GUEST;
-    }
-    return ACCESS_LEVELS.GUEST;
-  }
-
-  // Save access level to cookie (only upgrades, never downgrades)
-  function setAccessLevel(level) {
-    const currentLevel = getStoredAccessLevel();
-    if (level > currentLevel) {
-      const levelName = Object.keys(ACCESS_LEVELS).find(k => ACCESS_LEVELS[k] === level).toLowerCase();
-      document.cookie = `${CONFIG.ACCESS_COOKIE}=${levelName}; path=/; secure; samesite=strict; max-age=${60 * 60 * 24 * 365}`;
+  // Get secret mode from localStorage
+  function getSecretUnlocked() {
+    try {
+      return localStorage.getItem(CONFIG.SECRET_KEY) === 'true';
+    } catch (e) {
+      return false;
     }
   }
 
-  // Check if user is at least at given level
-  function hasAccessLevel(level) {
-    return getStoredAccessLevel() >= level;
+  // Save secret mode to localStorage
+  function setSecretUnlocked(unlocked) {
+    try {
+      if (unlocked) {
+        localStorage.setItem(CONFIG.SECRET_KEY, 'true');
+      } else {
+        localStorage.removeItem(CONFIG.SECRET_KEY);
+      }
+    } catch (e) {
+      console.warn('Failed to save secret mode:', e);
+    }
   }
 
   // Konami code sequence: up up down down left right left right
@@ -101,7 +92,6 @@
     const password = elements.passwordInput.value;
     if (password === CONFIG.PASSWORD) {
       if (setSignedCookies()) {
-        setAccessLevel(ACCESS_LEVELS.AUTHENTICATED);
         trackEvent('login', { method: 'password' });
         hidePasswordPrompt();
         startPlayer();
@@ -183,7 +173,6 @@
     passwordContainer: document.getElementById('password-container'),
     passwordInput: document.getElementById('password-input'),
     passwordError: document.getElementById('password-error'),
-    welcomeBack: document.getElementById('welcome-back'),
     volumeSlider: document.getElementById('volume-slider'),
     volumeValue: document.getElementById('volume-value'),
     infoTrigger: document.getElementById('info-trigger'),
@@ -192,8 +181,7 @@
     modalBackdrop: document.querySelector('.modal-backdrop'),
     imageModal: document.getElementById('image-modal'),
     imageModalImg: document.getElementById('image-modal-img'),
-    imageModalClose: document.getElementById('image-modal-close'),
-    resetLink: document.getElementById('reset-link')
+    imageModalClose: document.getElementById('image-modal-close')
   };
 
   // URL hash helpers for deep linking (base64 encoded track path)
@@ -404,7 +392,7 @@
         // First time unlock
         state.secretUnlocked = true;
         state.mode = MODES.SECRET;
-        setAccessLevel(ACCESS_LEVELS.SECRET);
+        setSecretUnlocked(true);
         trackEvent('secret_unlock', { method: 'konami' });
         flashKonamiSuccess();
         setSignedCookies();
@@ -444,7 +432,7 @@
     state.secretUnlocked = true;
     state.waitingForBA = false;
     state.mode = MODES.SECRET;
-    setAccessLevel(ACCESS_LEVELS.SECRET);
+    setSecretUnlocked(true);
     setSignedCookies(); // Ensure cookies are set for manifest access
     showCashRain();
     // Go to player after animation
@@ -455,7 +443,7 @@
     state.secretUnlocked = true;
     state.waitingForBA = false;
     state.mode = MODES.SECRET;
-    setAccessLevel(ACCESS_LEVELS.SECRET);
+    setSecretUnlocked(true);
     setSignedCookies(); // Ensure cookies are set for manifest access
     showCashRain();
     // Go to player after animation
@@ -858,18 +846,8 @@
 
     // Check if we have valid CloudFront cookies
     if (!hasValidCookies()) {
-      // Returning user with expired CloudFront cookies - try to refresh them
-      if (getStoredAccessLevel() >= ACCESS_LEVELS.AUTHENTICATED && SIGNED_COOKIES) {
-        if (setSignedCookies()) {
-          startPlayer();
-          return;
-        }
-      }
-      // Show password prompt and reset link for returning users
+      // No cookies - show password prompt
       showPasswordPrompt();
-      if (getStoredAccessLevel() >= ACCESS_LEVELS.AUTHENTICATED) {
-        elements.resetLink.classList.remove('hidden');
-      }
       return;
     }
     startPlayer();
@@ -1066,9 +1044,9 @@
     CONFIG.COOKIE_NAMES.forEach(name => {
       document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
     });
-    // Clear access level cookie
-    document.cookie = `${CONFIG.ACCESS_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
-    console.log('Cookies cleared');
+    // Clear secret mode from localStorage
+    setSecretUnlocked(false);
+    console.log('Cookies and localStorage cleared');
   }
 
   // Localhost check - grants full permissions
@@ -1086,20 +1064,15 @@
 
   // Initialize
   function init() {
-    // Restore state from access cookie (production only)
+    // Restore secret mode from localStorage (production only)
     if (!isLocalhost()) {
-      const accessLevel = getStoredAccessLevel();
-      if (accessLevel >= ACCESS_LEVELS.SECRET) {
+      if (getSecretUnlocked()) {
         state.mode = MODES.SECRET;
         state.secretUnlocked = true;
       } else {
         state.mode = MODES.REGULAR;
       }
-      // Show welcome back for returning users
-      if (accessLevel >= ACCESS_LEVELS.AUTHENTICATED && elements.welcomeBack) {
-        elements.welcomeBack.classList.remove('hidden');
-      }
-      console.log('36247 initialized - access level:', accessLevel);
+      console.log('36247 initialized - secret mode:', state.secretUnlocked);
     } else {
       console.log('36247 initialized - localhost mode');
     }
@@ -1247,15 +1220,6 @@
           e.preventDefault();
           handlePasswordSubmit();
         }
-      });
-    }
-
-    // Reset link - clear all cookies and reload
-    if (elements.resetLink) {
-      elements.resetLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        clearAllCookies();
-        window.location.reload();
       });
     }
 

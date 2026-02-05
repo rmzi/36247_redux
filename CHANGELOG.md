@@ -4,6 +4,16 @@ All notable changes to 36247 are documented here.
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-02-05
+
+### Changed
+- Simplified storage architecture: access level now derived from CloudFront cookie presence
+- Secret mode persisted in localStorage instead of separate cookie
+- Removed "welcome back" message and "reset cookies" link (no longer needed)
+
+### Fixed
+- Cookie/localStorage sync issues where UI state could get out of sync with auth state
+
 ## [2.2.0] - 2026-02-05
 
 ### Added

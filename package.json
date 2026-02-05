@@ -1,6 +1,6 @@
 {
   "name": "36247_redux-main",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Remake of 36 Mafia player made by the lovely folks @ F.A.T.",
   "main": "index.js",
   "directories": {

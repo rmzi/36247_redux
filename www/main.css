@@ -260,36 +260,6 @@ body::after {
   visibility: visible;
 }
 
-.reset-link {
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 15px;
-  letter-spacing: 0.05em;
-  text-decoration: none;
-}
-
-.reset-link:hover {
-  color: var(--fg);
-  text-decoration: underline;
-}
-
-.reset-link.hidden {
-  display: none;
-}
-
-/* Welcome back message for returning users */
-.welcome-back {
-  font-size: 12px;
-  color: var(--muted);
-  letter-spacing: 0.1em;
-  margin-bottom: 20px;
-  text-transform: lowercase;
-}
-
-.welcome-back.hidden {
-  display: none;
-}
-
 /* Konami progress dots - minimal */
 .konami-progress {
   display: flex;
