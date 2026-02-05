@@ -247,6 +247,29 @@ body::after {
   color: var(--muted);
 }
 
+.password-submit-btn {
+  background: transparent;
+  border: 2px solid var(--muted);
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 16px;
+  padding: 13px 20px;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.password-submit-btn:hover {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+.password-submit-btn:active {
+  background: var(--fg);
+  color: var(--bg);
+}
+
 .password-error {
   color: var(--accent);
   font-size: 12px;

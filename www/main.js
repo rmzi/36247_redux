@@ -236,7 +236,8 @@
     imageModalImg: document.getElementById('image-modal-img'),
     imageModalClose: document.getElementById('image-modal-close'),
     resetBtn: document.getElementById('reset-btn'),
-    passwordResetBtn: document.getElementById('password-reset-btn')
+    passwordResetBtn: document.getElementById('password-reset-btn'),
+    passwordSubmitBtn: document.getElementById('password-submit-btn')
   };
 
   // URL hash helpers for deep linking (base64 encoded track path)
@@ -1288,12 +1289,29 @@
       });
     }
 
+    // Password submit button
+    if (elements.passwordSubmitBtn) {
+      elements.passwordSubmitBtn.addEventListener('click', handlePasswordSubmit);
+      elements.passwordSubmitBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        handlePasswordSubmit();
+      });
+    }
+
     // Reset buttons
     if (elements.resetBtn) {
       elements.resetBtn.addEventListener('click', resetApp);
+      elements.resetBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        resetApp();
+      });
     }
     if (elements.passwordResetBtn) {
       elements.passwordResetBtn.addEventListener('click', resetApp);
+      elements.passwordResetBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        resetApp();
+      });
     }
 
     // Set initial volume to 50%
