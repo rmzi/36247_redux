@@ -73,7 +73,7 @@
     }
     try {
       for (const [name, value] of Object.entries(SIGNED_COOKIES)) {
-        document.cookie = `${name}=${value}; path=/; secure; samesite=strict; max-age=86400`;
+        document.cookie = `${name}=${value}; path=/; secure; samesite=strict; max-age=${60 * 60 * 24 * 365}`;
       }
       return true;
     } catch (e) {

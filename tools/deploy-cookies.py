@@ -83,7 +83,7 @@ def generate_signed_cookies(key_pair_id: str, private_key_pem: str, hours: int) 
 
 def main():
     parser = argparse.ArgumentParser(description='Deploy auth page with fresh signed cookies')
-    parser.add_argument('--hours', type=int, default=168, help='Cookie validity in hours (default: 168 = 1 week)')
+    parser.add_argument('--hours', type=int, default=8760, help='Cookie validity in hours (default: 8760 = 1 year)')
     parser.add_argument('--dry-run', action='store_true', help='Show what would be deployed without deploying')
     args = parser.parse_args()
 
