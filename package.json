@@ -4,7 +4,8 @@
   "description": "Remake of 36 Mafia player made by the lovely folks @ F.A.T.",
   "main": "index.js",
   "directories": {
-    "doc": "docs"
+    "doc": "docs",
+    "test": "tests"
   },
   "scripts": {
     "test": "playwright test",
@@ -19,5 +20,9 @@
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.58.1"
+  },
+  "dependencies": {
+    "playwright": "^1.58.1",
+    "playwright-core": "^1.58.1"
   }
 }

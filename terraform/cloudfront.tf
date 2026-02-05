@@ -143,6 +143,30 @@ resource "aws_cloudfront_distribution" "main" {
     max_ttl     = 300
   }
 
+  # Artwork behavior: Tracks bucket (requires signed cookies)
+  ordered_cache_behavior {
+    path_pattern               = "/artwork/*"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = "tracks"
+    viewer_protocol_policy     = "redirect-to-https"
+    compress                   = true
+    trusted_key_groups         = [aws_cloudfront_key_group.signing.id]
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+
+    forwarded_values {
+      query_string = false
+      headers      = ["Origin"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 86400   # 1 day for images
+    max_ttl     = 604800  # 7 days
+  }
+
   # Handle SPA routing
   custom_error_response {
     error_code         = 404
