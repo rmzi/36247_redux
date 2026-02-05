@@ -898,6 +898,9 @@
 
   // Event handlers
   async function handleEnter() {
+    // Hide enter button immediately
+    elements.enterBtn.classList.add('hidden');
+
     // Localhost gets full permissions, no cookies
     if (isLocalhost()) {
       console.log('🔧 Localhost - secret mode');
