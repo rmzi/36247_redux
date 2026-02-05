@@ -920,6 +920,7 @@ body::after {
 
 .modal-links {
   display: flex;
+  justify-content: center;
   gap: 20px;
   margin-top: 20px;
   padding-top: 20px;
