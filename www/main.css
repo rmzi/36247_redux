@@ -57,6 +57,9 @@ body {
   height: 100%;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
 }
 
 .screen.active {
@@ -105,6 +108,22 @@ body {
 
 .password-container.hidden {
   display: none;
+}
+
+.password-container.dismissed {
+  animation: toss-away 0.4s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes toss-away {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) rotate(-15deg);
+  }
 }
 
 .password-input {
@@ -188,7 +207,7 @@ body {
   display: block;
 }
 
-/* COMBO BREAKER overlay */
+/* COMBO BREAKER overlay - desktop B+A unlock */
 .combo-breaker {
   position: fixed;
   inset: 0;
@@ -201,6 +220,25 @@ body {
 }
 
 .combo-breaker span {
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--bg);
+  letter-spacing: 0.2em;
+}
+
+/* Flip unlock overlay - mobile phone flip */
+.flip-unlock {
+  position: fixed;
+  inset: 0;
+  background: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: combo-flash 2s ease-out forwards;
+}
+
+.flip-unlock span {
   font-size: 48px;
   font-weight: bold;
   color: var(--bg);
@@ -219,6 +257,11 @@ body {
   width: 100%;
   max-width: 800px;
   padding: 20px;
+  overflow: hidden;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Album artwork */

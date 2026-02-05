@@ -8,12 +8,45 @@
   // Configuration
   const CONFIG = {
     STORAGE_KEY: '36247_heard_tracks',
+    ACCESS_COOKIE: '36247_access',
     COOKIE_NAMES: ['CloudFront-Policy', 'CloudFront-Signature', 'CloudFront-Key-Pair-Id'],
     PASSWORD: 'ayemanesaymane'
   };
 
+  // Access levels (ordered by privilege)
+  const ACCESS_LEVELS = {
+    GUEST: 0,
+    AUTHENTICATED: 1,
+    SUPER: 2,
+    SECRET: 3
+  };
+
   // COOKIES_PLACEHOLDER - replaced by deploy-cookies.py
   const SIGNED_COOKIES = null;
+
+  // Get access level from cookie
+  function getStoredAccessLevel() {
+    const match = document.cookie.match(new RegExp(`${CONFIG.ACCESS_COOKIE}=([^;]+)`));
+    if (match) {
+      const level = ACCESS_LEVELS[match[1].toUpperCase()];
+      return level !== undefined ? level : ACCESS_LEVELS.GUEST;
+    }
+    return ACCESS_LEVELS.GUEST;
+  }
+
+  // Save access level to cookie (only upgrades, never downgrades)
+  function setAccessLevel(level) {
+    const currentLevel = getStoredAccessLevel();
+    if (level > currentLevel) {
+      const levelName = Object.keys(ACCESS_LEVELS).find(k => ACCESS_LEVELS[k] === level).toLowerCase();
+      document.cookie = `${CONFIG.ACCESS_COOKIE}=${levelName}; path=/; secure; samesite=strict; max-age=${60 * 60 * 24 * 365}`;
+    }
+  }
+
+  // Check if user is at least at given level
+  function hasAccessLevel(level) {
+    return getStoredAccessLevel() >= level;
+  }
 
   // Konami code sequence: up up down down left right left right
   const KONAMI_SEQUENCE = ['up', 'up', 'down', 'down', 'left', 'right', 'left', 'right'];
@@ -61,6 +94,7 @@
     const password = elements.passwordInput.value;
     if (password === CONFIG.PASSWORD) {
       if (setSignedCookies()) {
+        setAccessLevel(ACCESS_LEVELS.AUTHENTICATED);
         hidePasswordPrompt();
         startPlayer();
       } else {
@@ -231,10 +265,23 @@
     setTimeout(() => overlay.remove(), 2000);
   }
 
+  function showFlipUnlock() {
+    const overlay = document.createElement('div');
+    overlay.className = 'flip-unlock';
+    overlay.innerHTML = '<span>UNLOCKED</span>';
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 2000);
+  }
+
   function handleKonamiInput(direction) {
     // Only process on enter screen
     if (!elements.enterScreen.classList.contains('active')) return;
     if (state.superUnlocked) return;
+
+    // Hide password box on first Konami input
+    if (state.konamiProgress === 0 && direction === 'up') {
+      elements.passwordContainer.classList.add('dismissed');
+    }
 
     if (KONAMI_SEQUENCE[state.konamiProgress] === direction) {
       state.konamiProgress++;
@@ -244,6 +291,7 @@
         state.superUnlocked = true;
         state.waitingForBA = true;
         state.mode = MODES.SUPER;
+        setAccessLevel(ACCESS_LEVELS.SUPER);
         flashKonamiSuccess();
         showSecretHint();
         initOrientationListener();
@@ -260,7 +308,7 @@
     if (code === 'KeyB') {
       state.pressedB = true;
     } else if (code === 'KeyA' && state.pressedB) {
-      unlockSecret();
+      unlockSecretDesktop();
     } else {
       state.pressedB = false;
     }
@@ -273,15 +321,24 @@
     const isUpsideDown = Math.abs(e.gamma) > 150 || Math.abs(e.beta) > 150;
 
     if (isUpsideDown) {
-      unlockSecret();
+      unlockSecretMobile();
     }
   }
 
-  function unlockSecret() {
+  function unlockSecretDesktop() {
     state.secretUnlocked = true;
     state.waitingForBA = false;
     state.mode = MODES.SECRET;
+    setAccessLevel(ACCESS_LEVELS.SECRET);
     showComboBreaker();
+  }
+
+  function unlockSecretMobile() {
+    state.secretUnlocked = true;
+    state.waitingForBA = false;
+    state.mode = MODES.SECRET;
+    setAccessLevel(ACCESS_LEVELS.SECRET);
+    showFlipUnlock();
   }
 
   function initOrientationListener() {
@@ -749,9 +806,23 @@
 
   // Initialize
   function init() {
-    // Start in regular mode (unlock via Konami code)
-    state.mode = MODES.REGULAR;
-    console.log('36247 initialized - enter Konami code to unlock');
+    // Restore state from access cookie
+    const accessLevel = getStoredAccessLevel();
+
+    if (accessLevel >= ACCESS_LEVELS.SECRET) {
+      state.mode = MODES.SECRET;
+      state.superUnlocked = true;
+      state.secretUnlocked = true;
+    } else if (accessLevel >= ACCESS_LEVELS.SUPER) {
+      state.mode = MODES.SUPER;
+      state.superUnlocked = true;
+      state.waitingForBA = true;
+      initOrientationListener();
+    } else {
+      state.mode = MODES.REGULAR;
+    }
+
+    console.log('36247 initialized - access level:', accessLevel);
 
     // Bind event listeners
     elements.enterBtn.addEventListener('click', handleEnter);
