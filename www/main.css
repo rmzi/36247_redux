@@ -385,9 +385,9 @@ body::after {
 
 /* Album artwork */
 .artwork-container {
-  width: min(280px, 60vw);
-  height: min(280px, 60vw);
-  margin: 20px auto 5%;
+  width: min(240px, 50vw);
+  height: min(240px, 50vw);
+  margin: 10px auto 2%;
   border: 2px solid var(--muted);
   flex-shrink: 0;
 }
@@ -405,9 +405,9 @@ body::after {
 .track-info-wrapper {
   width: 100%;
   overflow: hidden;
-  margin-bottom: clamp(15px, 4vw, 30px);
+  margin-bottom: clamp(8px, 2vw, 12px);
   /* Fixed height prevents UI jumping when text wraps */
-  min-height: clamp(60px, 12vw, 80px);
+  min-height: clamp(45px, 8vw, 55px);
   display: flex;
   align-items: center;
 }
@@ -434,7 +434,7 @@ body::after {
   min-width: 50px;
   max-width: 25%;
   /* Fixed height for each item - accommodates 2-3 lines */
-  height: clamp(45px, 10vw, 60px);
+  height: clamp(38px, 7vw, 45px);
   overflow: hidden;
 }
 
@@ -503,7 +503,7 @@ body::after {
   display: flex;
   justify-content: center;
   gap: 5px;
-  margin-bottom: clamp(15px, 4vw, 30px);
+  margin-bottom: clamp(8px, 2vw, 12px);
   font-size: clamp(10px, 2vw, 12px);
   color: var(--muted);
 }
@@ -513,7 +513,7 @@ body::after {
   display: flex;
   justify-content: center;
   gap: clamp(8px, 2vw, 15px);
-  margin-bottom: clamp(20px, 5vw, 40px);
+  margin-bottom: clamp(10px, 2vw, 15px);
 }
 
 .control-btn {
@@ -593,8 +593,8 @@ body::after {
 
 /* Track List (Superuser Mode) */
 .track-list-container {
-  margin-top: clamp(15px, 4vw, 30px);
-  padding-top: clamp(10px, 3vw, 20px);
+  margin-top: clamp(8px, 2vw, 12px);
+  padding-top: clamp(5px, 1vw, 8px);
   width: 100%;
 }
 
@@ -755,7 +755,7 @@ body::after {
   align-items: center;
   justify-content: center;
   gap: clamp(6px, 2vw, 10px);
-  margin-bottom: clamp(15px, 4vw, 30px);
+  margin-bottom: clamp(8px, 2vw, 12px);
 }
 
 .volume-label {
@@ -800,7 +800,7 @@ body::after {
 
 /* Info Trigger - 3D Cube */
 .info-trigger {
-  margin-top: 30px;
+  margin-top: 15px;
   cursor: pointer;
   perspective: 100px;
 }
