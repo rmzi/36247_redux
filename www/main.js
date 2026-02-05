@@ -952,6 +952,9 @@
       clearAllCookies();
       window.location.reload();
     }
+
+    // Debug shortcuts (Shift + 1-4)
+    handleDebugKeys(e);
   }
 
   function clearAllCookies() {
@@ -962,6 +965,68 @@
     // Clear access level cookie
     document.cookie = `${CONFIG.ACCESS_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
     console.log('Cookies cleared');
+  }
+
+  // Debug mode - check URL params (localhost only)
+  function isLocalhost() {
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  }
+
+  function checkDebugMode() {
+    if (!isLocalhost()) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const debugMode = params.get('debug');
+
+    if (debugMode) {
+      console.log('🔧 Debug mode:', debugMode);
+
+      // Set mode directly
+      if (debugMode === 'super') {
+        state.mode = MODES.SUPER;
+        state.superUnlocked = true;
+        setAccessLevel(ACCESS_LEVELS.SUPER);
+        setSignedCookies();
+      } else if (debugMode === 'secret') {
+        state.mode = MODES.SECRET;
+        state.superUnlocked = true;
+        state.secretUnlocked = true;
+        setAccessLevel(ACCESS_LEVELS.SECRET);
+        setSignedCookies();
+      } else if (debugMode === 'auth') {
+        setAccessLevel(ACCESS_LEVELS.AUTHENTICATED);
+        setSignedCookies();
+      } else if (debugMode === 'guest') {
+        clearAllCookies();
+        state.mode = MODES.REGULAR;
+      }
+
+      // Skip enter screen if authenticated
+      if (debugMode !== 'guest' && debugMode !== 'enter') {
+        setTimeout(() => startPlayer(), 100);
+      }
+    }
+  }
+
+  // Debug keyboard shortcuts (Shift + number) - localhost only
+  function handleDebugKeys(e) {
+    if (!e.shiftKey || !isLocalhost()) return;
+
+    // Shift+1 = guest, Shift+2 = auth, Shift+3 = super, Shift+4 = secret
+    if (e.code === 'Digit1') {
+      console.log('🔧 Debug: Guest mode');
+      clearAllCookies();
+      window.location.search = '?debug=guest';
+    } else if (e.code === 'Digit2') {
+      console.log('🔧 Debug: Authenticated mode');
+      window.location.search = '?debug=auth';
+    } else if (e.code === 'Digit3') {
+      console.log('🔧 Debug: Super mode');
+      window.location.search = '?debug=super';
+    } else if (e.code === 'Digit4') {
+      console.log('🔧 Debug: Secret mode');
+      window.location.search = '?debug=secret';
+    }
   }
 
   // Initialize
@@ -982,6 +1047,9 @@
     }
 
     console.log('36247 initialized - access level:', accessLevel);
+
+    // Check for debug mode in URL
+    checkDebugMode();
 
     // Check for deep-linked track in URL
     state.pendingTrackPath = getTrackPathFromHash();
