@@ -5,7 +5,7 @@
 - **Site bucket**: Public static files (HTML, JS, CSS) served via CloudFront
 - **Tracks bucket**: Private audio/artwork, requires signed cookies
 - **CloudFront**: CDN with Origin Access Control (OAC) for both buckets
-- **Signed Cookies**: 1-week TTL, required for audio streaming and manifest
+- **Signed Cookies**: 1-year TTL, required for audio streaming and manifest
 
 ## Player Modes
 
@@ -66,11 +66,10 @@ npm run deploy:cookies   # Refresh auth cookies (weekly)
 
 ### Refresh Cookies
 
-Cookies expire after 1 week:
+Cookies default to 1 year. Refresh anytime with:
 
 ```bash
-source tools/.venv/bin/activate
-python tools/deploy-cookies.py --hours 168
+npm run deploy:cookies
 ```
 
 ### Generate Cookies for Testing
