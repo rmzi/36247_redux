@@ -260,6 +260,28 @@ body::after {
   visibility: visible;
 }
 
+/* Reset button */
+.reset-btn {
+  background: transparent;
+  border: 1px solid var(--muted);
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 8px 20px;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  margin-top: 15px;
+}
+
+.reset-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.reset-btn.hidden {
+  display: none;
+}
+
 /* Konami progress dots - minimal */
 .konami-progress {
   display: flex;

@@ -5,6 +5,8 @@
 (function() {
   'use strict';
 
+  const APP_VERSION = '2.3.0';
+
   // Configuration
   const CONFIG = {
     STORAGE_KEY: '36247_heard_tracks',
@@ -73,11 +75,31 @@
     }
   }
 
+  // Version check for cache busting
+  async function checkVersion() {
+    try {
+      const response = await fetch(`/version.txt?_=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) return;
+      const serverVersion = (await response.text()).trim();
+      if (serverVersion !== APP_VERSION) {
+        // Preserve hash for deep links
+        const hash = window.location.hash;
+        window.location.href = window.location.pathname + '?_=' + Date.now() + hash;
+      }
+    } catch (e) {
+      console.warn('Version check failed:', e);
+    }
+  }
+
   // Show password prompt
   function showPasswordPrompt() {
     elements.passwordContainer.classList.remove('hidden');
     elements.passwordInput.focus();
     state.passwordShowing = true;
+    // Show reset button if in error recovery mode
+    if (state.errorRecoveryMode && elements.passwordResetBtn) {
+      elements.passwordResetBtn.classList.remove('hidden');
+    }
   }
 
   // Hide password prompt
@@ -94,6 +116,9 @@
       if (setSignedCookies()) {
         trackEvent('login', { method: 'password' });
         hidePasswordPrompt();
+        // Reset error state and retry
+        state.consecutiveErrors = 0;
+        state.errorRecoveryMode = false;
         startPlayer();
       } else {
         elements.passwordError.textContent = 'cookie error';
@@ -105,6 +130,31 @@
       elements.passwordError.classList.add('visible');
       elements.passwordInput.value = '';
       elements.passwordInput.focus();
+    }
+  }
+
+  // Reset app - clears auth but preserves heard tracks
+  function resetApp() {
+    trackEvent('app_reset');
+    CONFIG.COOKIE_NAMES.forEach(name => {
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
+    });
+    setSecretUnlocked(false);
+    // Preserve heard tracks - don't clear STORAGE_KEY
+    // Preserve hash for deep links
+    const hash = window.location.hash;
+    window.location.href = window.location.pathname + '?_=' + Date.now() + hash;
+  }
+
+  // Handle playback errors with recovery
+  function handlePlaybackError(error) {
+    console.error('Playback error:', error);
+    state.consecutiveErrors++;
+    if (state.consecutiveErrors >= 2) {
+      state.errorRecoveryMode = true;
+      showPasswordPrompt();
+    } else {
+      playNextTrack();
     }
   }
 
@@ -137,7 +187,10 @@
     passwordShowing: false,
     // Session history for back/forward
     playHistory: [],
-    historyIndex: -1
+    historyIndex: -1,
+    // Error tracking for resilience
+    consecutiveErrors: 0,
+    errorRecoveryMode: false
   };
 
   // DOM Elements
@@ -181,7 +234,9 @@
     modalBackdrop: document.querySelector('.modal-backdrop'),
     imageModal: document.getElementById('image-modal'),
     imageModalImg: document.getElementById('image-modal-img'),
-    imageModalClose: document.getElementById('image-modal-close')
+    imageModalClose: document.getElementById('image-modal-close'),
+    resetBtn: document.getElementById('reset-btn'),
+    passwordResetBtn: document.getElementById('password-reset-btn')
   };
 
   // URL hash helpers for deep linking (base64 encoded track path)
@@ -519,9 +574,10 @@
 
       if (!response.ok) {
         if (response.status === 403) {
-          // Redirect to auth page to get fresh cookies
-          window.location.href = CONFIG.AUTH_URL;
-          return;
+          state.consecutiveErrors++;
+          state.errorRecoveryMode = true;
+          showPasswordPrompt();
+          return false;
         }
         throw new Error(`Failed to load manifest: ${response.status}`);
       }
@@ -529,6 +585,10 @@
       state.manifest = await response.json();
       state.tracks = state.manifest.tracks || [];
       state.filteredTracks = [...state.tracks];
+
+      // Reset error state on success
+      state.consecutiveErrors = 0;
+      state.errorRecoveryMode = false;
 
       if (state.tracks.length === 0) {
         throw new Error('No tracks available.');
@@ -732,6 +792,9 @@
       elements.playPauseBtn.textContent = 'PAUSE';
       markTrackHeard(track.id);
 
+      // Reset error count on successful playback
+      state.consecutiveErrors = 0;
+
       // Track song play
       trackEvent('song_play', {
         artist: track.artist,
@@ -751,8 +814,7 @@
         renderTrackList();
       }
     } catch (e) {
-      console.error('Playback error:', e);
-      playNextTrack();
+      handlePlaybackError(e);
     }
   }
 
@@ -1064,6 +1126,9 @@
 
   // Initialize
   function init() {
+    // Check version and auto-refresh if stale
+    checkVersion();
+
     // Restore secret mode from localStorage (production only)
     if (!isLocalhost()) {
       if (getSecretUnlocked()) {
@@ -1223,14 +1288,21 @@
       });
     }
 
+    // Reset buttons
+    if (elements.resetBtn) {
+      elements.resetBtn.addEventListener('click', resetApp);
+    }
+    if (elements.passwordResetBtn) {
+      elements.passwordResetBtn.addEventListener('click', resetApp);
+    }
+
     // Set initial volume to 50%
     elements.audio.volume = 0.5;
 
     // Handle audio errors
     elements.audio.addEventListener('error', (e) => {
-      console.error('Audio error:', e);
       if (state.currentTrack) {
-        playNextTrack();
+        handlePlaybackError(e);
       }
     });
 
