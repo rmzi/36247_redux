@@ -146,6 +146,24 @@
     window.location.href = window.location.pathname + '?_=' + Date.now() + hash;
   }
 
+  // Full reset - clears everything including heard tracks
+  function fullResetApp() {
+    if (!confirm('This will clear all data including your listening history. Continue?')) {
+      return;
+    }
+    trackEvent('full_reset');
+    CONFIG.COOKIE_NAMES.forEach(name => {
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict`;
+    });
+    setSecretUnlocked(false);
+    try {
+      localStorage.removeItem(CONFIG.STORAGE_KEY);
+    } catch (e) {
+      console.warn('Failed to clear storage:', e);
+    }
+    window.location.href = window.location.pathname + '?_=' + Date.now();
+  }
+
   // Handle playback errors with recovery
   function handlePlaybackError(error) {
     console.error('Playback error:', error);
@@ -237,7 +255,8 @@
     imageModalClose: document.getElementById('image-modal-close'),
     resetBtn: document.getElementById('reset-btn'),
     passwordResetBtn: document.getElementById('password-reset-btn'),
-    passwordSubmitBtn: document.getElementById('password-submit-btn')
+    passwordSubmitBtn: document.getElementById('password-submit-btn'),
+    fullResetBtn: document.getElementById('full-reset-btn')
   };
 
   // URL hash helpers for deep linking (base64 encoded track path)
@@ -1315,6 +1334,11 @@
         e.preventDefault();
         resetApp();
       });
+    }
+
+    // Full reset button (in info modal)
+    if (elements.fullResetBtn) {
+      elements.fullResetBtn.addEventListener('click', fullResetApp);
     }
 
     // Set initial volume to 50%

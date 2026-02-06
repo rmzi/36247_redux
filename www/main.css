@@ -309,6 +309,23 @@ body::after {
   display: none;
 }
 
+.modal-reset-btn {
+  background: transparent;
+  border: 1px solid var(--muted);
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 8px 16px;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  margin-top: 5px;
+}
+
+.modal-reset-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Konami progress dots - minimal */
 .konami-progress {
   display: flex;
